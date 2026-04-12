@@ -15,7 +15,7 @@ export class PermissionService {
   hasPermission(module: keyof UserPermissions, action: 'create' | 'read' | 'update' | 'delete'): boolean {
     const user = this.authService.currentUser();
     if (!user) return false;
-    
+
     // El SuperAdmin tiene acceso total a todo
     if (user.role === 'superadmin') return true;
 
@@ -66,10 +66,10 @@ export class PermissionService {
   canCreateRole(targetRole: Role): boolean {
     const user = this.authService.currentUser();
     if (!user) return false;
-    
+
     if (user.role === 'superadmin') return true;
     if (user.role === 'admin' && targetRole === 'maintainer') return true;
-    
+
     return false;
   }
 }

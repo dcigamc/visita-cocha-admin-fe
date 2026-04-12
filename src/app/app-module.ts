@@ -14,6 +14,10 @@ import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
 
+// PrimeNG
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+
 @NgModule({
   declarations: [
     App
@@ -23,16 +27,21 @@ import { App } from './app';
     BrowserAnimationsModule,
     AppRoutingModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    ToastModule
   ],
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     providePrimeNG({
         theme: {
-            preset: Aura
+            preset: Aura,
+            options: {
+              darkModeSelector: '.my-app-dark'
+            }
         }
     }),
+    MessageService,
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),

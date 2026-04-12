@@ -1,0 +1,15 @@
+@import './vendors/styles-vendors';
+
+/* Fix clipping in PrimeNG Tabs for dropdowns/popups */
+p-tabpanels,
+p-tabpanel,
+.p-tabpanels,
+.p-tabpanel {
+  overflow: visible !important;
+}
+
+form {
+  &.overflow-hidden {
+    overflow: visible !important;
+  }
+}

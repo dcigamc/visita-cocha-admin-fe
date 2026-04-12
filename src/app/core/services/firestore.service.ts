@@ -2,17 +2,16 @@ import { Injectable, inject } from '@angular/core';
 import { 
   Firestore, 
   collection, 
-  collectionData, 
   doc, 
-  docData, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
   query, 
   QueryConstraint,
-  getDoc
+  getDoc,
+  onSnapshot
 } from '@angular/fire/firestore';
-import { Observable, from, firstValueFrom } from 'rxjs';
+import { Observable } from 'rxjs';
 import { LogService } from './log.service';
 import { LogModule } from '../models/log.model';
 
@@ -25,19 +24,54 @@ export class FirestoreService {
 
   /**
    * Obtiene todos los documentos de una colección con filtros opcionales.
+   * Usa onSnapshot directamente para evitar errores de tipo internos de AngularFire.
    */
   getAll<T>(collectionName: string, constraints: QueryConstraint[] = []): Observable<T[]> {
-    const colRef = collection(this.firestore, collectionName);
-    const q = query(colRef, ...constraints);
-    return collectionData(q, { idField: 'id' }) as Observable<T[]>;
+    return new Observable<T[]>(subscriber => {
+      const colRef = collection(this.firestore, collectionName);
+      const q = query(colRef, ...constraints);
+      
+      const unsubscribe = onSnapshot(q, 
+        (snapshot) => {
+          const items = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as T));
+          subscriber.next(items);
+        },
+        (error) => {
+          console.error(`Error in getAll (${collectionName}):`, error);
+          subscriber.error(error);
+        }
+      );
+      
+      return () => unsubscribe();
+    });
   }
 
   /**
    * Obtiene un documento por su ID.
    */
   getById<T>(collectionName: string, id: string): Observable<T> {
-    const docRef = doc(this.firestore, `${collectionName}/${id}`);
-    return docData(docRef, { idField: 'id' }) as Observable<T>;
+    return new Observable<T>(subscriber => {
+      const docRef = doc(this.firestore, `${collectionName}/${id}`);
+      
+      const unsubscribe = onSnapshot(docRef,
+        (snapshot) => {
+          if (snapshot.exists()) {
+            subscriber.next({ id: snapshot.id, ...snapshot.data() } as T);
+          } else {
+            subscriber.next(null as any);
+          }
+        },
+        (error) => {
+          console.error(`Error in getById (${collectionName}/${id}):`, error);
+          subscriber.error(error);
+        }
+      );
+
+      return () => unsubscribe();
+    });
   }
 
   /**

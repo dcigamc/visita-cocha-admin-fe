@@ -7,13 +7,27 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { TooltipModule } from 'primeng/tooltip';
+import { TabsModule } from 'primeng/tabs';
+import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { DividerModule } from 'primeng/divider';
+import { DialogModule } from 'primeng/dialog';
+import { ImageModule } from 'primeng/image';
+import { NgxIntlTelInputModule } from 'ngx-intl-tel-input';
+import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 
 import { AttractivesRoutingModule } from './attractives-routing.module';
 import { AttractiveListComponent } from './attractive-list/attractive-list.component';
+import { AttractiveFormComponent } from './attractive-form/attractive-form.component';
 
 @NgModule({
   declarations: [
-    AttractiveListComponent
+    AttractiveListComponent,
+    AttractiveFormComponent
   ],
   imports: [
     CommonModule,
@@ -22,7 +36,19 @@ import { AttractiveListComponent } from './attractive-list/attractive-list.compo
     TableModule,
     ButtonModule,
     CardModule,
-    InputTextModule
+    InputTextModule,
+    TextareaModule,
+    InputNumberModule,
+    ToggleSwitchModule,
+    TooltipModule,
+    TabsModule,
+    SelectModule,
+    MultiSelectModule,
+    DividerModule,
+    DialogModule,
+    ImageModule,
+    NgxIntlTelInputModule,
+    BsDropdownModule.forRoot()
   ]
 })
 export class AttractivesModule { }

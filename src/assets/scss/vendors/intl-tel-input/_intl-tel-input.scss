@@ -1,0 +1,29 @@
+.iti {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  font-family: inherit !important;
+  font-feature-settings: inherit !important;
+  font-size: 1rem !important;
+  color: var(--p-inputtext-color) !important;
+  background: var(--p-inputtext-background) !important;
+  border: 1px solid var(--p-inputtext-border-color) !important;
+  border-radius: var(--p-inputtext-border-radius) !important;
+  outline-color: transparent !important;
+  box-shadow: var(--p-inputtext-shadow) !important;
+  position:  relative !important;
+}
+
+.iti > input {
+  background: transparent !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-radius: 0px;
+}
+
+.selected-dial-code {
+  padding-inline: var(--p-inputtext-padding-x) !important;
+  margin: 0 !important;
+  font-weight: 600 !important;
+}

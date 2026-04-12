@@ -1,9 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { AttractiveModel } from '../../../core/models/attractive.model';
+import { CategoryModel } from '../../../core/models/category.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { serverTimestamp } from '@angular/fire/firestore';
+import { serverTimestamp, collection, doc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
+import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 
 @Injectable({
   providedIn: 'root'
@@ -11,13 +13,67 @@ import { Observable } from 'rxjs';
 export class AttractiveService {
   private firestoreService = inject(FirestoreService);
   private authService = inject(AuthService);
-  private collection = 'attractives';
+  private storage = inject(Storage);
+  private collection = 'attractions';
+
+  /**
+   * Genera un ID único para un nuevo atractivo.
+   */
+  generateId(): string {
+    return doc(collection(this.firestoreService['firestore'], this.collection)).id;
+  }
+
+  /**
+   * Sube un archivo a Firebase Storage en la carpeta del atractivo.
+   */
+  async uploadFile(itemId: string, file: File, folder: 'cover' | 'gallery'): Promise<string> {
+    const fileName = `${Date.now()}_${file.name}`;
+    const storageRef = ref(this.storage, `attractions/${itemId}/${folder}/${fileName}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    return getDownloadURL(snapshot.ref);
+  }
+
+  /**
+   * Elimina un archivo de Firebase Storage.
+   */
+  async deleteFileByUrl(url: string): Promise<void> {
+    try {
+      const storageRef = ref(this.storage, url);
+      await deleteObject(storageRef);
+    } catch (error) {
+      console.warn('Error deleting file from storage (might not exist):', error);
+    }
+  }
+  private mainCategoriesCollection = 'main-categories';
+  private attractionsCategoriesCollection = 'attraction-categories';
+  private foodsCollection = 'foods';
 
   /**
    * Obtiene todos los atractivos.
    */
   getAttractives(): Observable<AttractiveModel[]> {
     return this.firestoreService.getAll<AttractiveModel>(this.collection);
+  }
+
+  /**
+   * Obtiene todas las categorías principales.
+   */
+  getMainCategories(): Observable<CategoryModel[]> {
+    return this.firestoreService.getAll<CategoryModel>(this.mainCategoriesCollection);
+  }
+
+  /**
+   * Obtiene todas las categorías de atractivos.
+   */
+  getAttractionCategories(): Observable<CategoryModel[]> {
+    return this.firestoreService.getAll<CategoryModel>(this.attractionsCategoriesCollection);
+  }
+
+  /**
+   * Obtiene todas las comidas.
+   */
+  getFoods(): Observable<any[]> {
+    return this.firestoreService.getAll<any>(this.foodsCollection);
   }
 
   /**

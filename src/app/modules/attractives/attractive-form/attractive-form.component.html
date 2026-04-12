@@ -1,0 +1,261 @@
+<div class="space-y-6 w-full pb-12">
+  <!-- Header -->
+  <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+    <div class="overflow-hidden mr-4">
+      <h1 class="text-3xl font-bold text-slate-800 truncate" [title]="form.get('name')?.value">
+        {{ isEdit() ? 'Editar: ' + (form.get('name')?.value || 'Atractivo') : 'Nuevo Atractivo' }}
+      </h1>
+      @if (isAdmin() && updatedAt()) {
+      <p class="text-slate-400 text-xs mt-1 italic">
+        Última actualización: {{ updatedAt().toDate() | date:'dd/MM/yyyy - HH:mm' }}
+      </p>
+      }
+    </div>
+    <div class="flex gap-3">
+      <p-button label="Cancelar" icon="pi pi-times" [outlined]="true" severity="secondary"
+        (click)="cancel()"></p-button>
+      <p-button [label]="isEdit() ? 'Actualizar' : 'Guardar'" [icon]="isEdit() ? 'pi pi-save' : 'pi pi-check'"
+        [loading]="isLoading()" [disabled]="form.invalid" (click)="onSubmit()" severity="primary"></p-button>
+    </div>
+  </div>
+
+  <form [formGroup]="form" class="bg-white rounded-xl shadow-sm border border-slate-200 !overflow-hidden">
+    <p-tabs value="0">
+      <p-tablist>
+        <p-tab value="0">General</p-tab>
+        <p-tab value="1">Características</p-tab>
+        <p-tab value="2">Ubicación</p-tab>
+        <p-tab value="3">Contacto</p-tab>
+        <p-tab value="4">Multimedia</p-tab>
+      </p-tablist>
+
+      <p-tabpanels>
+        <!-- Sección: Información General -->
+        <p-tabpanel value="0">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 p-fluid">
+            <div class="flex flex-col gap-2">
+              <label for="name" class="font-semibold text-slate-700">Nombre</label>
+              <input pInputText id="name" formControlName="name" (blur)="generateSlug()"
+                placeholder="Ej: Cristo de la Concordia" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label for="slug" class="font-semibold text-slate-700">Slug (URL)</label>
+              <input pInputText id="slug" formControlName="slug" placeholder="cristo-de-la-concordia" />
+            </div>
+
+            <div class="flex flex-col md:col-span-2 gap-2">
+              <label for="description" class="font-semibold text-slate-700">Descripción</label>
+              <textarea pInputTextarea id="description" formControlName="description" rows="4"
+                class="p-inputtext w-full"></textarea>
+            </div>
+
+            <div class="flex items-center gap-10 mt-2 md:col-span-2">
+              <div class="flex items-center gap-3">
+                <p-toggleswitch formControlName="available"></p-toggleswitch>
+                <label class="font-semibold text-slate-700">Disponible</label>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <p-toggleswitch formControlName="isFeatured"></p-toggleswitch>
+                <label class="font-semibold text-slate-700">Destacado</label>
+              </div>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- Sección: Características -->
+        <p-tabpanel value="1">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 p-fluid">
+            <div class="flex flex-col gap-2">
+              <label for="mainCategories" class="font-semibold text-slate-700">Categorías Principales</label>
+              <p-multiselect id="mainCategories" formControlName="mainCategories" [options]="mainCategoriesList()"
+                optionLabel="name" optionValue="id" placeholder="Seleccionar categorías principales" display="chip"
+                class="w-full"></p-multiselect>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label for="categories" class="font-semibold text-slate-700">Sub Categorías</label>
+              <p-multiselect id="categories" formControlName="categories" [options]="attractionCategoriesList()"
+                optionLabel="name" optionValue="id" placeholder="Seleccionar categorías" display="chip"
+                class="w-full"></p-multiselect>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label for="foods" class="font-semibold text-slate-700">Comidas Relacionadas</label>
+              <p-multiselect id="foods" formControlName="foods" [options]="foodsList()" optionLabel="name"
+                optionValue="id" placeholder="Seleccionar comidas" display="chip" class="w-full"></p-multiselect>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label for="rating" class="font-semibold text-slate-700">Puntuación</label>
+              <p-select id="rating" formControlName="rating" [options]="ratingOptions" optionLabel="label"
+                optionValue="value" class="w-full"></p-select>
+            </div>
+
+            @if (isAdmin()) {
+            <div class="flex flex-col gap-2">
+              <label for="historyId" class="font-semibold text-slate-700">History ID (Univalle)</label>
+              <input pInputText id="historyId" formControlName="historyId" placeholder="Ej: history-123" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label for="order" class="font-semibold text-slate-700">Orden de Visualización</label>
+              <p-inputnumber id="order" formControlName="order" [showButtons]="true" [min]="0"></p-inputnumber>
+            </div>
+            }
+          </div>
+        </p-tabpanel>
+
+        <!-- Sección: Ubicación -->
+        <p-tabpanel value="2">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 p-fluid">
+            <div class="flex flex-col md:col-span-2 gap-2" formGroupName="location">
+              <label for="address" class="font-semibold text-slate-700">Dirección</label>
+              <input pInputText id="address" formControlName="address" placeholder="Ej: Av. de las Heroínas..." />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 md:col-span-2" formGroupName="location">
+              <div class="flex flex-col gap-2" formGroupName="coords">
+                <label for="lat" class="font-semibold text-slate-700">Latitud</label>
+                <input pInputText id="lat" formControlName="lat" />
+              </div>
+              <div class="flex flex-col gap-2" formGroupName="coords">
+                <label for="lng" class="font-semibold text-slate-700">Longitud</label>
+                <input pInputText id="lng" formControlName="lng" />
+              </div>
+            </div>
+
+            <div class="flex flex-col md:col-span-2 gap-2">
+              <label for="accessibility" class="font-semibold text-slate-700">Accesibilidad</label>
+              <textarea pInputTextarea id="accessibility" formControlName="accessibility" rows="3"
+                class="p-inputtext w-full" placeholder="Describe la accesibilidad al lugar..."></textarea>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- Sección: Contacto -->
+        <p-tabpanel value="3">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 p-fluid">
+            <div class="flex flex-col md:col-span-2 gap-2">
+              <label for="schedule" class="font-semibold text-slate-700">Horarios</label>
+              <input pInputText id="schedule" formControlName="schedule" placeholder="Lun-Vie: 08:00 - 18:00" />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2" formGroupName="contact">
+              <div class="flex flex-col gap-2">
+                <label for="phone" class="font-semibold text-slate-700">Teléfono</label>
+                <ngx-intl-tel-input [cssClass]="'p-inputtext w-full'" [preferredCountries]="preferredCountries"
+                  [enableAutoCountrySelect]="true" [enablePlaceholder]="true" [searchCountryFlag]="true"
+                  [searchCountryField]="[SearchCountryField.All]" [selectedCountryISO]="CountryISO.Bolivia"
+                  [phoneValidation]="true" [separateDialCode]="true" [numberFormat]="PhoneNumberFormat.International"
+                  name="phone" formControlName="phone">
+                </ngx-intl-tel-input>
+              </div>
+              <div class="flex flex-col gap-2">
+                <label for="mail" class="font-semibold text-slate-700">Correo electrónico</label>
+                <input pInputText id="mail" formControlName="mail" placeholder="ejemplo@gmail.com" />
+              </div>
+              <div class="flex flex-col md:col-span-2 gap-2">
+                <label for="link" class="font-semibold text-slate-700">Sitio Web / Enlace</label>
+                <input pInputText id="link" formControlName="link" placeholder="https://visita.cochabamba.bo" />
+              </div>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- Sección: Multimedia -->
+        <p-tabpanel value="4">
+          <div class="flex flex-col gap-8 p-6">
+
+            <!-- Imagen de Portada -->
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-1">
+                <h3 class="text-lg font-bold text-slate-800">Imagen de Portada *</h3>
+                <p class="text-xs text-slate-400 max-w-xs">Esta imagen será la portada de presentación del
+                  atractivo.</p>
+              </div>
+
+              <div class="flex items-center gap-6">
+                @if (coverPreview()) {
+                <div class="relative w-48 h-48 rounded-xl overflow-hidden border border-slate-200 group shadow-sm">
+                  <img [src]="coverPreview()" class="w-full h-full object-cover" alt="Portada">
+                  <div
+                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <p-button icon="pi pi-eye" [rounded]="true" severity="secondary"
+                      (click)="openImagePreview(coverPreview()!)"></p-button>
+                    <p-button icon="pi pi-trash" [rounded]="true" severity="danger" (click)="removeCover()"></p-button>
+                  </div>
+                </div>
+                } @else {
+                <div
+                  class="w-48 h-48 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer text-slate-400 group"
+                  (click)="coverInput.click()">
+                  <i class="pi pi-upload text-3xl"></i>
+                  <span class="text-xs font-bold uppercase tracking-wider">Subir Portada</span>
+                </div>
+                }
+                <input #coverInput type="file" class="hidden" accept="image/*" (change)="onCoverSelected($event)">
+              </div>
+            </div>
+
+            <p-divider></p-divider>
+
+            <!-- Galería de Imágenes -->
+            <div class="flex flex-col gap-4">
+              <div class="flex items-baseline justify-between">
+                <h3 class="text-lg font-bold text-slate-800">Galería de Imágenes</h3>
+                <span class="text-xs text-slate-500">{{ galleryPreviews().length }} / 10 imágenes</span>
+              </div>
+
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                @for (img of galleryPreviews(); track $index) {
+                <div class="relative w-48 h-48 rounded-xl overflow-hidden border border-slate-200 group shadow-sm">
+                  <img [src]="img.url" class="w-full h-full object-cover" alt="Galería">
+                  <div
+                    class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <p-button icon="pi pi-eye" [rounded]="true" severity="secondary"
+                      (click)="openImagePreview(img.url)"></p-button>
+                    <p-button icon="pi pi-trash" [rounded]="true" severity="danger"
+                      (click)="removeGalleryImage($index)"></p-button>
+                  </div>
+                </div>
+                }
+
+                @if (galleryPreviews().length < 10) {
+                <div
+                  class="w-48 h-48 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer text-slate-400 group"
+                  (click)="galleryInput.click()">
+                  <i class="pi pi-upload text-3xl"></i>
+                  <span class="text-xs font-bold uppercase tracking-wider">Subir imagen</span>
+                </div>
+                }
+                <input #galleryInput type="file" class="hidden" accept="image/*" multiple
+                  (change)="onGallerySelected($event)">
+              </div>
+            </div>
+          </div>
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  </form>
+
+  <!-- Visor de Imágenes -->
+  <p-dialog [(visible)]="displayImageModal" [modal]="true" [dismissableMask]="true" styleClass="overflow-hidden"
+    header="Vista previa">
+
+    <ng-template pTemplate="header">
+      <div class="flex items-center justify-between w-full px-2">
+        <span class="text-lg font-semibold text-gray-700">
+          <i class="pi pi-image mr-2"></i>Vista previa
+        </span>
+      </div>
+    </ng-template>
+
+    <div class="flex items-center justify-center p-2">
+      <img [src]="selectedImageUrl()" class="max-w-full max-h-[75vh] object-contain rounded-lg shadow-md"
+        alt="Vista previa">
+    </div>
+
+  </p-dialog>
+</div>

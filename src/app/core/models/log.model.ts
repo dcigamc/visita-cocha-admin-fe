@@ -5,12 +5,12 @@ export type LogModule = 'attractives' | 'restaurants' | 'foods' | 'events' | 'us
 
 export interface LogModel {
   id?: string;
-  userId: string;
-  userEmail?: string;
-  userRole: string;
+  userId: string | any;
+  userEmail?: string | any;
+  userRole: string | any;
   action: LogAction;
   module: LogModule;
-  targetId?: string;
+  targetId?: string | any;
   targetName?: string;
   previousData?: any;
   newData?: any;

@@ -27,7 +27,7 @@ export interface UserModel {
   email: string;
   displayName: string;
   role: Role;
-  createdBy: string;
+  createdBy: string | any;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   isActive: boolean;
