@@ -687,12 +687,12 @@ Mantenedor: Dashboard | [solo módulos con permisos asignados]
 
 ```bash
 # Crear proyecto Angular
-ng new dci-vc-admin --routing --style=scss --standalone
+ng new dci-vc-admin --routing --style=scss
 
 # Instalar dependencias Firebase
 npm install firebase @angular/fire
 
-# Instalar Prime ng y configs (app.config)
+# Instalar Prime ng y configs (app.config) version 21 (NO lts), compatible con angular 21
 npm install primeng @primeuix/themes
 import { ApplicationConfig } from '@angular/core';
 import { providePrimeNG } from 'primeng/config';

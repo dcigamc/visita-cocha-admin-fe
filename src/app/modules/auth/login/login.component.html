@@ -1,0 +1,64 @@
+<div class="flex items-center justify-center min-h-screen bg-slate-50 p-4 bg-[var(--color-test-pink)]">
+
+  <p-card class="w-full max-w-md shadow-lg">
+    <ng-template pTemplate="header">
+      <div class="text-center pt-8 px-4">
+        <h2 class="text-3xl font-bold text-slate-800 m-0">Visita Cocha</h2>
+        <p class="text-slate-500 mt-2">Panel Administrativo</p>
+      </div>
+    </ng-template>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 pt-4">
+      <div class="flex flex-col gap-2">
+        <label for="email" class="font-semibold text-slate-700">Correo Electrónico</label>
+        <input 
+          pInputText 
+          id="email" 
+          type="email" 
+          formControlName="email" 
+          placeholder="ejemplo@correo.com"
+          class="w-full"
+          [fluid]="true"
+        />
+        @if (loginForm.get('email')?.touched && loginForm.get('email')?.invalid) {
+          <small class="text-red-500">Ingrese un correo válido.</small>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="password" class="font-semibold text-slate-700">Contraseña</label>
+        <p-password 
+          id="password" 
+          formControlName="password" 
+          [toggleMask]="true" 
+          [feedback]="false"
+          placeholder="••••••••"
+          styleClass="w-full"
+          [fluid]="true"
+        ></p-password>
+        @if (loginForm.get('password')?.touched && loginForm.get('password')?.invalid) {
+          <small class="text-red-500">La contraseña es requerida (mín. 6 caracteres).</small>
+        }
+      </div>
+
+      @if (errorMessage()) {
+        <p-message severity="error" [text]="errorMessage()!" class="w-full"></p-message>
+      }
+
+      <p-button 
+        label="Iniciar Sesión" 
+        type="submit" 
+        [loading]="isLoading()" 
+        [disabled]="loginForm.invalid"
+        class="w-full"
+        styleClass="w-full"
+      ></p-button>
+    </form>
+
+    <ng-template pTemplate="footer">
+      <div class="text-center pb-4">
+        <a href="#" class="text-sm text-blue-600 hover:underline">¿Olvidaste tu contraseña?</a>
+      </div>
+    </ng-template>
+  </p-card>
+</div>
