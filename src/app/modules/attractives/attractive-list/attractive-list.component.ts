@@ -3,6 +3,7 @@ import { AttractiveService } from '../services/attractive.service';
 import { AttractiveModel } from '../../../core/models/attractive.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-attractive-list',
@@ -27,8 +28,13 @@ import { Router } from '@angular/router';
 export class AttractiveListComponent {
   private attractiveService = inject(AttractiveService);
   private router = inject(Router);
+  private messageService = inject(MessageService);
 
   attractives = toSignal(this.attractiveService.getAttractives());
+
+  // Detail Modal State
+  displayDetailModal = signal(false);
+  selectedAttractive = signal<AttractiveModel | null>(null);
 
   create() {
     this.router.navigate(['/attractives/new']);
@@ -36,6 +42,23 @@ export class AttractiveListComponent {
 
   edit(id: string) {
     this.router.navigate(['/attractives/edit', id]);
+  }
+
+  showDetail(item: AttractiveModel) {
+    this.selectedAttractive.set(item);
+    this.displayDetailModal.set(true);
+  }
+
+  copyToClipboard(text: string) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.messageService.add({ 
+        severity: 'success', 
+        summary: 'Copiado', 
+        detail: 'Descripción copiada al portapapeles',
+        life: 2000
+      });
+    });
   }
 
   delete(item: AttractiveModel) {
