@@ -3,7 +3,7 @@
   <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
     <div class="overflow-hidden mr-4">
       <h1 class="text-3xl font-bold text-slate-800 truncate" [title]="form.get('name')?.value">
-        {{ isEdit() ? 'Editar: ' + (form.get('name')?.value || 'Atractivo') : 'Nuevo Atractivo' }}
+        {{ isEdit() ? 'Editar: ' + (form.get('name')?.value || 'Restaurante') : 'Nuevo Restaurante' }}
       </h1>
       @if (isAdmin() && updatedAt()) {
       <p class="text-slate-400 text-xs mt-1 italic">
@@ -26,7 +26,8 @@
         <p-tab value="1">Características</p-tab>
         <p-tab value="2">Ubicación</p-tab>
         <p-tab value="3">Contacto</p-tab>
-        <p-tab value="4">Multimedia</p-tab>
+        <p-tab value="4">Delivery</p-tab>
+        <p-tab value="5">Multimedia</p-tab>
       </p-tablist>
 
       <p-tabpanels>
@@ -36,15 +37,15 @@
             <div class="flex flex-col gap-2">
               <label for="name" class="font-semibold text-slate-700">Nombre</label>
               <input pInputText id="name" formControlName="name" (blur)="generateSlug()"
-                placeholder="Ej: Cristo de la Concordia" />
+                placeholder="Ej: La Casa del Campo" />
             </div>
 
             @if (isAdmin()) {
               <div class="flex flex-col gap-2">
                 <label for="slug" class="font-semibold text-slate-700">Slug</label>
-                <input pInputText id="slug" formControlName="slug" placeholder="cristo-de-la-concordia" />
+                <input pInputText id="slug" formControlName="slug" placeholder="la-casa-del-campo" />
                 @if (form.get('slug')?.errors?.['pattern'] && form.get('slug')?.touched) {
-                  <small class="text-red-500">Formato inválido. Use solo minúsculas, números y guiones (ej: mi-atractivo).</small>
+                  <small class="text-red-500">Formato inválido. Use solo minúsculas, números y guiones.</small>
                 }
               </div>
             }
@@ -81,13 +82,13 @@
 
             <div class="flex flex-col gap-2">
               <label for="categories" class="font-semibold text-slate-700">Sub Categorías</label>
-              <p-multiselect id="categories" formControlName="categories" [options]="attractionCategoriesList()"
+              <p-multiselect id="categories" formControlName="categories" [options]="restaurantCategoriesList()"
                 optionLabel="name" optionValue="id" placeholder="Seleccionar categorías" display="chip"
                 class="w-full" appendTo="body"></p-multiselect>
             </div>
 
             <div class="flex flex-col gap-2">
-              <label for="foods" class="font-semibold text-slate-700">Comidas Relacionadas</label>
+              <label for="foods" class="font-semibold text-slate-700">Platos/Comidas Disponibles</label>
               <p-multiselect id="foods" formControlName="foods" [options]="foodsList()" optionLabel="name"
                 optionValue="id" placeholder="Seleccionar comidas" display="chip" class="w-full" appendTo="body"></p-multiselect>
             </div>
@@ -99,15 +100,15 @@
             </div>
 
             @if (isAdmin()) {
-            <div class="flex flex-col gap-2">
-              <label for="historyId" class="font-semibold text-slate-700">History ID (Univalle)</label>
-              <input pInputText id="historyId" formControlName="historyId" placeholder="Ej: history-123" />
-            </div>
+              <div class="flex flex-col gap-2">
+                <label for="historyId" class="font-semibold text-slate-700">History ID (Univalle)</label>
+                <input pInputText id="historyId" formControlName="historyId" placeholder="Ej: history-123" />
+              </div>
 
-            <div class="flex flex-col gap-2">
-              <label for="order" class="font-semibold text-slate-700">Orden de Visualización</label>
-              <p-inputnumber id="order" formControlName="order" [showButtons]="true" [min]="0"></p-inputnumber>
-            </div>
+              <div class="flex flex-col gap-2">
+                <label for="order" class="font-semibold text-slate-700">Orden de Visualización</label>
+                <p-inputnumber id="order" formControlName="order" [showButtons]="true" [min]="0"></p-inputnumber>
+              </div>
             }
           </div>
         </p-tabpanel>
@@ -135,11 +136,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-fluid">
               <div class="flex flex-col md:col-span-2 gap-2" formGroupName="location">
                 <label for="address" class="font-semibold text-slate-700">Dirección</label>
-                <input pInputText id="address" formControlName="address" placeholder="Ej: Av. de las Heroínas..." />
+                <input pInputText id="address" formControlName="address" placeholder="Ej: Av. Melchor Urquidi..." />
                 <small class="text-slate-400 italic">Copia un link de GoogleMaps para obtener la ubicación exacta.</small>
               </div>
 
-              <!-- Inputs de Coordenadas (Ocultos para el usuario, pero funcionales para el form) -->
+              <!-- Inputs de Coordenadas (Ocultos) -->
               <div class="hidden" formGroupName="location">
                 <div formGroupName="coords">
                   <input formControlName="lat" />
@@ -172,31 +173,74 @@
               </div>
               <div class="flex flex-col gap-2">
                 <label for="mail" class="font-semibold text-slate-700">Correo electrónico</label>
-                <input pInputText id="mail" formControlName="mail" placeholder="ejemplo@gmail.com" />
+                <input pInputText id="mail" formControlName="mail" placeholder="contacto@restaurante.com" />
               </div>
               <div class="flex flex-col md:col-span-2 gap-2">
-                <label for="link" class="font-semibold text-slate-700">Sitio Web / Enlace</label>
-                <input pInputText id="link" formControlName="link" placeholder="https://visita.cochabamba.bo" />
+                <label for="link" class="font-semibold text-slate-700">Sitio Web / Facebook / Instagram</label>
+                <input pInputText id="link" formControlName="link" placeholder="https://www.facebook.com/restaurante" />
               </div>
             </div>
 
             <div class="flex flex-col md:col-span-2 gap-2">
-              <label for="schedule" class="font-semibold text-slate-700">Horarios</label>
-              <input pInputText id="schedule" formControlName="schedule" placeholder="Lun-Vie: 08:00 - 18:00" />
+              <label for="schedule" class="font-semibold text-slate-700">Horarios de Atención</label>
+              <input pInputText id="schedule" formControlName="schedule" placeholder="Lun-Dom: 11:30 - 23:00" />
             </div>
           </div>
         </p-tabpanel>
 
-        <!-- Sección: Multimedia -->
+        <!-- Sección: Delivery -->
         <p-tabpanel value="4">
-          <div class="flex flex-col gap-8 p-6">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h3 class="text-lg font-bold text-slate-800">Enlaces de Delivery</h3>
+                <p class="text-xs text-slate-400">Configura los enlaces directos a plataformas de delivery.</p>
+              </div>
+              <p-button label="Agregar Enlace" icon="pi pi-plus" size="small" (click)="addDeliveryUrl()" severity="info" [outlined]="true"></p-button>
+            </div>
 
+            <div formArrayName="deliveryUrls" class="space-y-4">
+              @for (delivery of deliveryUrls.controls; track $index) {
+                <div [formGroupName]="$index" class="p-4 bg-slate-50 rounded-lg border border-slate-200 relative group">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-fluid pr-10">
+                    <div class="flex flex-col gap-2">
+                      <label class="text-xs font-bold text-slate-500 uppercase">Plataforma</label>
+                      <p-select [options]="deliveryTypes" formControlName="type" optionLabel="label" optionValue="value" placeholder="Tipo" appendTo="body"></p-select>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                      <label class="text-xs font-bold text-slate-500 uppercase">Nombre a mostrar</label>
+                      <input pInputText formControlName="name" placeholder="Ej: PedidosYa Sucursal Central" />
+                    </div>
+                    <div class="flex flex-col gap-2">
+                      <label class="text-xs font-bold text-slate-500 uppercase">URL del enlace</label>
+                      <input pInputText formControlName="url" placeholder="https://..." />
+                    </div>
+                  </div>
+
+                  <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" 
+                    class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    (click)="removeDeliveryUrl($index)" pTooltip="Eliminar"></p-button>
+                </div>
+              }
+
+              @if (deliveryUrls.length === 0) {
+                <div class="p-12 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                  <i class="pi pi-truck text-4xl text-slate-200 mb-3"></i>
+                  <p class="text-slate-400 font-medium">No hay enlaces de delivery configurados</p>
+                  <p-button label="Configurar ahora" icon="pi pi-plus" [text]="true" (click)="addDeliveryUrl()" class="mt-2"></p-button>
+                </div>
+              }
+            </div>
+          </div>
+        </p-tabpanel>
+        <!-- Sección: Multimedia -->
+        <p-tabpanel value="5">
+          <div class="flex flex-col gap-8 p-6">
             <!-- Imagen de Portada -->
             <div class="flex flex-col gap-4">
               <div class="flex flex-col gap-1">
                 <h3 class="text-lg font-bold text-slate-800">Imagen de Portada *</h3>
-                <p class="text-xs text-slate-400 max-w-xs">Esta imagen será la portada de presentación del
-                  atractivo.</p>
+                <p class="text-xs text-slate-400 max-w-xs">Esta imagen será la portada de presentación en el listado.</p>
               </div>
 
               <div class="flex items-center gap-6">
@@ -266,7 +310,6 @@
   <!-- Visor de Imágenes -->
   <p-dialog [(visible)]="displayImageModal" [modal]="true" [dismissableMask]="true" styleClass="overflow-hidden"
     header="Vista previa">
-
     <ng-template pTemplate="header">
       <div class="flex items-center justify-between w-full px-2">
         <span class="text-lg font-semibold text-gray-700">
@@ -274,11 +317,9 @@
         </span>
       </div>
     </ng-template>
-
     <div class="flex items-center justify-center p-2">
       <img [src]="selectedImageUrl()" class="max-w-full max-h-[75vh] object-contain rounded-lg shadow-md"
         alt="Vista previa">
     </div>
-
   </p-dialog>
 </div>

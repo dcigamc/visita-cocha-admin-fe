@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal, computed, ViewChild, effect } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AttractiveService } from '../services/attractive.service';
-import { AttractiveModel } from '../../../core/models/attractive.model';
+import { RestaurantService } from '../services/restaurant.service';
+import { RestaurantModel } from '../../../core/models/restaurant.model';
 import { CategoryModel } from '../../../core/models/category.model';
 import { MessageService } from 'primeng/api';
 import { CountryISO, SearchCountryField, PhoneNumberFormat } from 'ngx-intl-tel-input';
@@ -10,15 +10,15 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MapComponent } from '../../../shared/components/map/map.component';
 
 @Component({
-  selector: 'app-attractive-form',
-  templateUrl: './attractive-form.component.html',
+  selector: 'app-restaurant-form',
+  templateUrl: './restaurant-form.component.html',
   standalone: false
 })
-export class AttractiveFormComponent implements OnInit {
+export class RestaurantFormComponent implements OnInit {
   @ViewChild(MapComponent) mapComponent!: MapComponent;
 
   private fb = inject(FormBuilder);
-  private attractiveService = inject(AttractiveService);
+  private restaurantService = inject(RestaurantService);
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -27,6 +27,13 @@ export class AttractiveFormComponent implements OnInit {
   // Control de pestañas y mapa
   activeTab = signal('0');
   showMap = signal(false);
+
+  deliveryTypes = [
+    { label: 'Yango', value: 'yango' },
+    { label: 'PedidosYa', value: 'pedidosya' },
+    { label: 'Dinki', value: 'dinki' },
+    { label: 'Otro', value: 'other' }
+  ];
 
   constructor() {
     // Efecto para reaccionar al cambio de pestaña y refrescar el mapa
@@ -47,13 +54,11 @@ export class AttractiveFormComponent implements OnInit {
     name: ['', [Validators.required]],
     slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
     description: ['', [Validators.required]],
-    type: [''],
     mainCategories: [[]],
     categories: [[]],
     available: [true],
     schedule: [''],
     rating: [3, [Validators.required]],
-    accessibility: [''],
     contact: this.fb.group({
       mail: ['', [Validators.email]],
       link: [''],
@@ -63,6 +68,7 @@ export class AttractiveFormComponent implements OnInit {
     gallery: [[]],
     order: [0],
     historyId: [''],
+    accessibility: [''],
     isFeatured: [false],
     location: this.fb.group({
       address: ['', [Validators.required]],
@@ -72,6 +78,7 @@ export class AttractiveFormComponent implements OnInit {
       })
     }),
     foods: [[]],
+    deliveryUrls: this.fb.array([]),
     isActive: [true]
   });
 
@@ -98,7 +105,7 @@ export class AttractiveFormComponent implements OnInit {
 
   // Lists for MultiSelects
   mainCategoriesList = signal<CategoryModel[]>([]);
-  attractionCategoriesList = signal<CategoryModel[]>([]);
+  restaurantCategoriesList = signal<CategoryModel[]>([]);
   foodsList = signal<any[]>([]);
   ratingOptions = [
     { label: '1 - Muy mal', value: 1 },
@@ -122,15 +129,19 @@ export class AttractiveFormComponent implements OnInit {
     CountryISO.Peru
   ];
 
+  get deliveryUrls() {
+    return this.form.get('deliveryUrls') as FormArray;
+  }
+
   ngOnInit() {
     this.loadInitialData();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEdit.set(true);
       this.id.set(id);
-      this.loadAttractive(id);
+      this.loadRestaurant(id);
     } else {
-      this.id.set(this.attractiveService.generateId());
+      this.id.set(this.restaurantService.generateId());
     }
 
     // Listener para el teléfono
@@ -148,6 +159,18 @@ export class AttractiveFormComponent implements OnInit {
     });
   }
 
+  addDeliveryUrl() {
+    this.deliveryUrls.push(this.fb.group({
+      type: ['yango'],
+      name: [''],
+      url: ['', [Validators.pattern(/https?:\/\/.+/)]]
+    }));
+  }
+
+  removeDeliveryUrl(index: number) {
+    this.deliveryUrls.removeAt(index);
+  }
+
   processGoogleMapsUrl(url: string) {
     const coordsRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
     const match = url.match(coordsRegex);
@@ -156,16 +179,13 @@ export class AttractiveFormComponent implements OnInit {
       const lat = parseFloat(match[1]);
       const lng = parseFloat(match[2]);
 
-      // 1. Actualizar coordenadas en el formulario
       this.form.get('location.coords.lat')?.setValue(lat);
       this.form.get('location.coords.lng')?.setValue(lng);
 
-      // 2. Asegurar que el mapa sea visible
       if (!this.showMap()) {
         this.showMap.set(true);
       }
 
-      // 3. Usar Leaflet (Nominatim) para obtener la calle exacta basándose en esas coordenadas
       setTimeout(() => {
         this.mapComponent?.reverseGeocode(lat, lng);
       }, 350);
@@ -187,22 +207,37 @@ export class AttractiveFormComponent implements OnInit {
   }
 
   loadInitialData() {
-    this.attractiveService.getMainCategories().subscribe({
+    this.restaurantService.getMainCategories().subscribe({
       next: (data) => this.mainCategoriesList.set(data)
     });
-    this.attractiveService.getAttractionCategories().subscribe({
-      next: (data) => this.attractionCategoriesList.set(data)
+    this.restaurantService.getRestaurantCategories().subscribe({
+      next: (data) => this.restaurantCategoriesList.set(data)
     });
-    this.attractiveService.getFoods().subscribe({
+    this.restaurantService.getFoods().subscribe({
       next: (data) => this.foodsList.set(data)
     });
   }
 
-  loadAttractive(id: string) {
+  loadRestaurant(id: string) {
     this.isLoading.set(true);
-    this.attractiveService.getAttractiveById(id).subscribe({
+    this.restaurantService.getRestaurantById(id).subscribe({
       next: (data) => {
         if (data) {
+          // Limpiar el FormArray antes de parchar
+          while (this.deliveryUrls.length !== 0) {
+            this.deliveryUrls.removeAt(0);
+          }
+          
+          if (data.deliveryUrls) {
+            data.deliveryUrls.forEach(url => {
+              this.deliveryUrls.push(this.fb.group({
+                type: [url.type, Validators.required],
+                name: [url.name, Validators.required],
+                url: [url.url, [Validators.required, Validators.pattern(/https?:\/\/.+/)]]
+              }));
+            });
+          }
+
           this.form.patchValue(data);
           if (data.updatedAt) this.updatedAt.set(data.updatedAt);
           if (data.coverUrl) this.coverPreview.set(data.coverUrl);
@@ -268,15 +303,15 @@ export class AttractiveFormComponent implements OnInit {
     if (this.form.invalid) return;
     this.isLoading.set(true);
     const itemId = this.id()!;
-    const formData = this.form.value as AttractiveModel;
+    const formData = this.form.value as RestaurantModel;
     try {
       if (this.coverFile()) {
-        formData.coverUrl = await this.attractiveService.uploadFile(itemId, this.coverFile()!, 'cover');
+        formData.coverUrl = await this.restaurantService.uploadFile(itemId, this.coverFile()!, 'cover');
       }
       const updatedGallery: string[] = [];
       for (const item of this.galleryPreviews()) {
         if (item.file) {
-          const url = await this.attractiveService.uploadFile(itemId, item.file, 'gallery');
+          const url = await this.restaurantService.uploadFile(itemId, item.file, 'gallery');
           updatedGallery.push(url);
         } else {
           updatedGallery.push(item.url);
@@ -284,12 +319,12 @@ export class AttractiveFormComponent implements OnInit {
       }
       formData.gallery = updatedGallery;
       if (this.isEdit()) {
-        await this.attractiveService.updateAttractive(itemId, formData);
+        await this.restaurantService.updateRestaurant(itemId, formData);
       } else {
-        await this.attractiveService.createAttractive({ ...formData, id: itemId } as any);
+        await this.restaurantService.createRestaurant({ ...formData, id: itemId } as any);
       }
-      for (const url of this.urlsToDelete) await this.attractiveService.deleteFileByUrl(url);
-      this.router.navigate(['/attractives']);
+      for (const url of this.urlsToDelete) await this.restaurantService.deleteFileByUrl(url);
+      this.router.navigate(['/restaurants']);
     } catch (error) {
       this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al procesar' });
     } finally {
@@ -298,7 +333,7 @@ export class AttractiveFormComponent implements OnInit {
   }
 
   cancel() {
-    this.router.navigate(['/attractives']);
+    this.router.navigate(['/restaurants']);
   }
 
   generateSlug() {

@@ -15,7 +15,7 @@ export class MainLayoutComponent {
     { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
     { label: 'Atractivos', icon: 'pi pi-map-marker', routerLink: '/attractives' },
     { label: 'Restaurantes', icon: 'pi pi-shop', routerLink: '/restaurants' },
-    { label: 'Comidas', icon: 'pi pi-apple', routerLink: '/foods' },
+    { label: 'Comidas', icon: 'pi pi-inbox', routerLink: '/foods' },
     { label: 'Eventos', icon: 'pi pi-calendar', routerLink: '/events' },
     { label: 'Usuarios', icon: 'pi pi-users', routerLink: '/users' },
     { label: 'Logs', icon: 'pi pi-list', routerLink: '/logs' }

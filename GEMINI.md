@@ -90,36 +90,19 @@ src/
 ```
 
 ```typescript
-// Modelo: attractions
+// Modelo: food
 {
     "id": "",
-    "mainCategories": [
-        ""
-    ],
-    "location": {
-        "address": "",
-        "coords": {
-            "lng": -66.13502541179427,
-            "lat": -17.384369077254807
-        }
-    },
     "available": true,
-    "foods": [
-        ""
-    ],
-    "schedule": "",
     "isFeatured": true,
     "description": "",
     "order": 20,
     "name": "",
-    "contact": {
-        "mail": "",
-        "link": "",
-        "phone": ""
-    },
     "rating": 5,
-    "categories": [
-        ""
+    "coverUrl": "",
+    "ingredients": [
+      "",
+      ""
     ]
 }
 ```
