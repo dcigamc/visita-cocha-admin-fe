@@ -124,8 +124,8 @@ src/
 
 ### Fase 2 — Módulos de Contenido (EN PROCESO 🔄)
 
-- [ ] Módulo Attractives (CRUD + relación foods)
-- [ ] Módulo Restaurants (CRUD + relación foods)
+- [x] Módulo Attractives (CRUD + relación foods)
+- [x] Módulo Restaurants (CRUD + relación foods)
 - [ ] Módulo Foods (CRUD + vista de relaciones inversas)
 - [ ] Módulo Events (CRUD + selector de todas las relaciones)
 

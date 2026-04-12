@@ -1,0 +1,191 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800">Comidas</h1>
+      <p class="text-slate-500 mt-1">Gestión de platos y comidas típicas</p>
+    </div>
+    <p-button label="Nueva" icon="pi pi-plus" (click)="create()" *hasPermission="'foods:create'"
+      severity="primary"></p-button>
+  </div>
+
+  <!-- Table Card -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <p-table #dt [value]="foods() || []" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20]"
+      responsiveLayout="stack" [globalFilterFields]="['name', 'description']" [rowHover]="true"
+      class="p-datatable-sm">
+      <!-- Table Caption (Filters) -->
+      <ng-template pTemplate="caption">
+        <div class="flex justify-between items-center">
+          <span class="p-input-icon-left w-full md:w-80 flex items-center gap-3">
+            <input pInputText type="text" (input)="$any(dt).filterGlobal($any($event.target).value, 'contains')"
+              placeholder="Buscar por nombre o descripción..."
+              class="w-full pl-10 border-slate-200 focus:ring-blue-500 rounded-lg text-sm" />
+          </span>
+          <div class="hidden md:block">
+            <span class="text-sm text-slate-400">Total: {{foods()?.length || 0}} items</span>
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr class="bg-slate-50 text-slate-600 uppercase text-xs font-bold tracking-wider">
+          <th pSortableColumn="name">Nombre <p-sortIcon field="name"></p-sortIcon></th>
+          <th pSortableColumn="rating">Puntuación <p-sortIcon field="rating"></p-sortIcon></th>
+          <th class="text-center">Estado</th>
+          <th>Destacado</th>
+          <th class="w-24 text-center pr-6">Acciones</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-item>
+        <tr class="hover:bg-slate-50/50 transition-colors">
+          <td class="flex items-center gap-3">
+            <div class="relative w-16 h-12 rounded-lg shadow-sm border border-slate-100 overflow-hidden group">
+              @if (item.coverUrl) {
+              <img [src]="item.coverUrl" class="w-full h-full object-cover" [alt]="item.name">
+              } @else {
+              <div class="w-full h-full bg-slate-100 flex items-center justify-center">
+                <i class="pi pi-image text-slate-300 text-xl"></i>
+              </div>
+              }
+            </div>
+
+            <div class="flex flex-col">
+              <span class="font-bold text-slate-800">{{item.name}}</span>
+              <span class="text-xs text-slate-500 truncate w-64">{{item.description}}</span>
+            </div>
+          </td>
+          <td>
+            <div class="flex items-center gap-1.5 text-amber-500 font-bold">
+              <i class="pi pi-star-fill text-sm"></i>
+              <span class="text-slate-700">{{item.rating || '0'}}</span>
+            </div>
+          </td>
+          <td class="text-center">
+            @if (item.available) {
+            <i class="pi pi-check-circle text-green-500 text-lg" pTooltip="Disponible"></i>
+            } @else {
+            <i class="pi pi-times-circle text-red-500 text-lg" pTooltip="No disponible"></i>
+            }
+          </td>
+          <td>
+            @if (item.isFeatured) {
+            <span
+              class="flex items-center gap-1.5 text-amber-600 bg-amber-50 px-2 py-1 rounded text-[10px] font-bold border border-amber-100 w-fit uppercase">
+              <i class="pi pi-bolt text-[10px]"></i> Destacado
+            </span>
+            }
+          </td>
+          <td class="pr-6 text-center">
+            <div class="flex justify-end gap-2">
+              <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="secondary"
+                (click)="showDetail(item)" pTooltip="Ver detalle"></p-button>
+              <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" (click)="edit(item.id)"
+                *hasPermission="'foods:update'" pTooltip="Editar"></p-button>
+              <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (click)="delete(item)"
+                *hasPermission="'foods:delete'" pTooltip="Eliminar"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="p-12 text-center">
+            <div class="flex flex-col items-center gap-3">
+              <i class="pi pi-inbox text-5xl text-slate-200"></i>
+              <span class="text-slate-400 font-medium">No se encontraron comidas</span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Detail Modal -->
+  <p-dialog [(visible)]="displayDetailModal" [modal]="true" [header]="selectedFood()?.name || 'Detalle de la Comida'"
+    [style]="{width: '50vw'}" [breakpoints]="{'960px': '75vw', '640px': '90vw'}" [dismissableMask]="true">
+
+    @if (selectedFood(); as item) {
+      <div class="flex flex-col gap-6">
+        <!-- Banner/Portada -->
+        <div class="relative w-full h-48 rounded-xl overflow-hidden shadow-sm border border-slate-100">
+          @if (item.coverUrl) {
+            <img [src]="item.coverUrl" class="w-full h-full object-cover" alt="Portada">
+          } @else {
+            <div class="w-full h-full bg-slate-100 flex items-center justify-center">
+              <i class="pi pi-image text-slate-300 text-4xl"></i>
+            </div>
+          }
+          <div class="absolute top-4 right-4 flex gap-2">
+            <span class="bg-white/90 backdrop-blur-sm text-amber-500 text-[10px] font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1 border border-amber-100">
+              <i class="pi pi-star-fill"></i> {{ item.rating || '0' }}
+            </span>
+            @if (item.isFeatured) {
+              <span class="bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm uppercase flex items-center gap-1">
+                <i class="pi pi-bolt"></i> Destacado
+              </span>
+            }
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="flex flex-col gap-4">
+            <div>
+              <div class="flex justify-between items-center">
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Descripción</label>
+                <p-button icon="pi pi-copy" [text]="true" [rounded]="true" size="small"
+                  severity="secondary" pTooltip="Copiar" (click)="copyToClipboard(item.description)"></p-button>
+              </div>
+              <p class="text-slate-600 text-sm mt-1 leading-relaxed line-clamp-5">
+                {{ item.description || 'Sin descripción' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-4">
+            @if (item.ingredients && item.ingredients.length > 0) {
+              <div>
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ingredientes</label>
+                <div class="flex flex-wrap gap-2 mt-1">
+                  @for (ing of item.ingredients; track $index) {
+                    <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                      {{ ing }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Galería resumida -->
+        @if (item.gallery && item.gallery.length > 0) {
+          <div>
+            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Galería ({{item.gallery.length}})</label>
+            <div class="flex gap-2 overflow-x-auto pb-2">
+              @for (imgUrl of item.gallery.slice(0, 5); track $index) {
+                <img [src]="imgUrl" class="w-24 h-24 rounded-lg object-cover border border-slate-100 shadow-sm shrink-0" alt="Galería">
+              }
+              @if (item.gallery.length > 5) {
+                <div class="w-24 h-24 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 font-bold text-xs">
+                  +{{ item.gallery.length - 5 }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <ng-template pTemplate="footer">
+      <div class="flex justify-end gap-2">
+        <p-button label="Cerrar" (click)="displayDetailModal.set(false)" [text]="true" severity="secondary"></p-button>
+        <p-button label="Editar" icon="pi pi-pencil" (click)="edit(selectedFood()?.id || '')"
+          *hasPermission="'foods:update'" severity="primary"></p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+</div>
