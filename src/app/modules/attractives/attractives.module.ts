@@ -23,6 +23,7 @@ import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { AttractivesRoutingModule } from './attractives-routing.module';
 import { AttractiveListComponent } from './attractive-list/attractive-list.component';
 import { AttractiveFormComponent } from './attractive-form/attractive-form.component';
+import { MapComponent } from '../../shared/components/map/map.component';
 
 @NgModule({
   declarations: [
@@ -48,7 +49,8 @@ import { AttractiveFormComponent } from './attractive-form/attractive-form.compo
     DialogModule,
     ImageModule,
     NgxIntlTelInputModule,
-    BsDropdownModule.forRoot()
+    BsDropdownModule.forRoot(),
+    MapComponent
   ]
 })
 export class AttractivesModule { }

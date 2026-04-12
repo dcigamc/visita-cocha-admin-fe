@@ -20,7 +20,7 @@
   </div>
 
   <form [formGroup]="form" class="bg-white rounded-xl shadow-sm border border-slate-200 !overflow-hidden">
-    <p-tabs value="0">
+    <p-tabs [(value)]="activeTab">
       <p-tablist>
         <p-tab value="0">General</p-tab>
         <p-tab value="1">Características</p-tab>
@@ -39,10 +39,15 @@
                 placeholder="Ej: Cristo de la Concordia" />
             </div>
 
-            <div class="flex flex-col gap-2">
-              <label for="slug" class="font-semibold text-slate-700">Slug (URL)</label>
-              <input pInputText id="slug" formControlName="slug" placeholder="cristo-de-la-concordia" />
-            </div>
+            @if (isAdmin()) {
+              <div class="flex flex-col gap-2">
+                <label for="slug" class="font-semibold text-slate-700">Slug</label>
+                <input pInputText id="slug" formControlName="slug" placeholder="cristo-de-la-concordia" />
+                @if (form.get('slug')?.errors?.['pattern'] && form.get('slug')?.touched) {
+                  <small class="text-red-500">Formato inválido. Use solo minúsculas, números y guiones (ej: mi-atractivo).</small>
+                }
+              </div>
+            }
 
             <div class="flex flex-col md:col-span-2 gap-2">
               <label for="description" class="font-semibold text-slate-700">Descripción</label>
@@ -109,27 +114,44 @@
 
         <!-- Sección: Ubicación -->
         <p-tabpanel value="2">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 p-fluid">
-            <div class="flex flex-col md:col-span-2 gap-2" formGroupName="location">
-              <label for="address" class="font-semibold text-slate-700">Dirección</label>
-              <input pInputText id="address" formControlName="address" placeholder="Ej: Av. de las Heroínas..." />
+          <div class="flex flex-col gap-6 p-6">
+            <!-- Mapa Interactivo -->
+            <div class="flex flex-col gap-2 min-h-[350px]">
+              @if (showMap()) {
+                <app-map
+                  [lat]="form.get('location.coords.lat')?.value"
+                  [lng]="form.get('location.coords.lng')?.value"
+                  (locationChange)="onMapLocationChange($event)"
+                  height="350px">
+                </app-map>
+              } @else {
+                <div class="w-full h-[350px] bg-slate-50 border border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400">
+                  <i class="pi pi-map-marker text-3xl animate-bounce"></i>
+                </div>
+              }
+              <small class="text-slate-400 italic">Haz clic en el mapa para ajustar la ubicación exacta.</small>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 md:col-span-2" formGroupName="location">
-              <div class="flex flex-col gap-2" formGroupName="coords">
-                <label for="lat" class="font-semibold text-slate-700">Latitud</label>
-                <input pInputText id="lat" formControlName="lat" />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-fluid">
+              <div class="flex flex-col md:col-span-2 gap-2" formGroupName="location">
+                <label for="address" class="font-semibold text-slate-700">Dirección</label>
+                <input pInputText id="address" formControlName="address" placeholder="Ej: Av. de las Heroínas..." />
+                <small class="text-slate-400 italic">Copia un link de GoogleMaps para obtener la ubicación exacta.</small>
               </div>
-              <div class="flex flex-col gap-2" formGroupName="coords">
-                <label for="lng" class="font-semibold text-slate-700">Longitud</label>
-                <input pInputText id="lng" formControlName="lng" />
-              </div>
-            </div>
 
-            <div class="flex flex-col md:col-span-2 gap-2">
-              <label for="accessibility" class="font-semibold text-slate-700">Accesibilidad</label>
-              <textarea pInputTextarea id="accessibility" formControlName="accessibility" rows="3"
-                class="p-inputtext w-full" placeholder="Describe la accesibilidad al lugar..."></textarea>
+              <!-- Inputs de Coordenadas (Ocultos para el usuario, pero funcionales para el form) -->
+              <div class="hidden" formGroupName="location">
+                <div formGroupName="coords">
+                  <input formControlName="lat" />
+                  <input formControlName="lng" />
+                </div>
+              </div>
+
+              <div class="flex flex-col md:col-span-2 gap-2">
+                <label for="accessibility" class="font-semibold text-slate-700">Accesibilidad</label>
+                <textarea pInputTextarea id="accessibility" formControlName="accessibility" rows="3"
+                  class="p-inputtext w-full" placeholder="Describe las manera de accesso al lugar..."></textarea>
+              </div>
             </div>
           </div>
         </p-tabpanel>
