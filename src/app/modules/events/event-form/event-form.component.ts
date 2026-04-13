@@ -1,37 +1,39 @@
-import { Component, inject, OnInit, signal, computed, effect } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray, FormControl } from '@angular/forms';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FoodService } from '../services/food.service';
-import { FoodModel } from '../../../core/models/food.model';
+import { EventService } from '../services/event.service';
+import { EventModel } from '../../../core/models/event.model';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../core/services/auth.service';
+import { Timestamp } from '@angular/fire/firestore';
 
 @Component({
-  selector: 'app-food-form',
-  templateUrl: './food-form.component.html',
+  selector: 'app-event-form',
+  templateUrl: './event-form.component.html',
   standalone: false
 })
-export class FoodFormComponent implements OnInit {
+export class EventFormComponent implements OnInit {
   private fb = inject(FormBuilder);
-  private foodService = inject(FoodService);
+  private eventService = inject(EventService);
   private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private messageService = inject(MessageService);
 
   activeTab = signal('0');
-  newIngredient = new FormControl('');
 
   form: FormGroup = this.fb.group({
-    name: ['', [Validators.required]],
-    slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
+    title: ['', [Validators.required]],
     description: ['', [Validators.required]],
     available: [true],
     isFeatured: [false],
     order: [0],
-    rating: [3, [Validators.required]],
-    ingredients: this.fb.array([]),
-    coverUrl: ['', [Validators.required]],
+    color: ['blue', [Validators.required]],
+    date: [new Date(), [Validators.required]],
+    foods: [[]],
+    restaurants: [[]],
+    attractions: [[]],
+    coverUrl: [''],
     gallery: [[]],
     isActive: [true]
   });
@@ -51,63 +53,52 @@ export class FoodFormComponent implements OnInit {
   displayImageModal = signal(false);
   selectedImageUrl = signal<string | null>(null);
 
+  // Lists for MultiSelects
+  foodsList = signal<any[]>([]);
+  restaurantsList = signal<any[]>([]);
+  attractionsList = signal<any[]>([]);
+
+  colorOptions = [
+    { label: 'Verde', value: 'green' },
+    { label: 'Amarillo', value: 'yellow' },
+    { label: 'Azul', value: 'blue' },
+    { label: 'Rojo', value: 'red' },
+    { label: 'Negro Claro', value: 'black-lighten' }
+  ];
+
   isAdmin = computed(() => {
     const role = this.authService.userRole();
     return role === 'superadmin' || role === 'admin';
   });
 
-  ratingOptions = [
-    { label: '1 - Muy mal', value: 1 },
-    { label: '2 - Mal', value: 2 },
-    { label: '3 - Regular', value: 3 },
-    { label: '4 - Bueno', value: 4 },
-    { label: '5 - Excelente', value: 5 }
-  ];
-
-  get ingredients() {
-    return this.form.get('ingredients') as FormArray;
-  }
-
   ngOnInit() {
+    this.loadInitialData();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEdit.set(true);
       this.id.set(id);
-      this.loadFood(id);
+      this.loadEvent(id);
     } else {
-      this.id.set(this.foodService.generateId());
+      this.id.set(this.eventService.generateId());
     }
   }
 
-  addIngredient() {
-    const value = this.newIngredient.value?.trim();
-    if (value) {
-      this.ingredients.push(new FormControl(value, Validators.required));
-      this.newIngredient.setValue('');
-    }
+  loadInitialData() {
+    this.eventService.getFoods().subscribe(data => this.foodsList.set(data));
+    this.eventService.getRestaurants().subscribe(data => this.restaurantsList.set(data));
+    this.eventService.getAttractives().subscribe(data => this.attractionsList.set(data));
   }
 
-  removeIngredient(index: number) {
-    this.ingredients.removeAt(index);
-  }
-
-  loadFood(id: string) {
+  loadEvent(id: string) {
     this.isLoading.set(true);
-    this.foodService.getFoodById(id).subscribe({
+    this.eventService.getEventById(id).subscribe({
       next: (data) => {
         if (data) {
-          // Clear ingredients FormArray before patching
-          while (this.ingredients.length !== 0) {
-            this.ingredients.removeAt(0);
-          }
-
-          if (data.ingredients) {
-            data.ingredients.forEach(ing => {
-              this.ingredients.push(new FormControl(ing, Validators.required));
-            });
-          }
-
-          this.form.patchValue(data);
+          const formData = {
+            ...data,
+            date: data.date instanceof Timestamp ? data.date.toDate() : data.date
+          };
+          this.form.patchValue(formData);
           if (data.updatedAt) this.updatedAt.set(data.updatedAt);
           if (data.coverUrl) this.coverPreview.set(data.coverUrl);
           if (data.gallery) this.galleryPreviews.set(data.gallery.map(url => ({ url })));
@@ -172,45 +163,45 @@ export class FoodFormComponent implements OnInit {
     if (this.form.invalid) return;
     this.isLoading.set(true);
     const itemId = this.id()!;
-    const formData = this.form.value as FoodModel;
+    const formData = { ...this.form.value };
+    
+    // Convert Date to Timestamp
+    if (formData.date instanceof Date) {
+      formData.date = Timestamp.fromDate(formData.date);
+    }
+
     try {
       if (this.coverFile()) {
-        formData.coverUrl = await this.foodService.uploadFile(itemId, this.coverFile()!, 'cover');
+        formData.coverUrl = await this.eventService.uploadFile(itemId, this.coverFile()!, 'cover');
       }
+
       const updatedGallery: string[] = [];
       for (const item of this.galleryPreviews()) {
         if (item.file) {
-          const url = await this.foodService.uploadFile(itemId, item.file, 'gallery');
+          const url = await this.eventService.uploadFile(itemId, item.file, 'gallery');
           updatedGallery.push(url);
         } else {
           updatedGallery.push(item.url);
         }
       }
       formData.gallery = updatedGallery;
+      
       if (this.isEdit()) {
-        await this.foodService.updateFood(itemId, formData);
+        await this.eventService.updateEvent(itemId, formData);
       } else {
-        await this.foodService.createFood({ ...formData, id: itemId } as any);
+        await this.eventService.createEvent({ ...formData, id: itemId } as any);
       }
-      for (const url of this.urlsToDelete) await this.foodService.deleteFileByUrl(url);
-      this.router.navigate(['/foods']);
+      
+      for (const url of this.urlsToDelete) await this.eventService.deleteFileByUrl(url);
+      this.router.navigate(['/events']);
     } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al procesar' });
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Error al procesar el evento' });
     } finally {
       this.isLoading.set(false);
     }
   }
 
   cancel() {
-    this.router.navigate(['/foods']);
-  }
-
-  generateSlug() {
-    const name = this.form.get('name')?.value;
-    const currentSlug = this.form.get('slug')?.value;
-    if (name && !currentSlug) {
-      const slug = name.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w ]+/g, '').replace(/ +/g, '-');
-      this.form.get('slug')?.setValue(slug);
-    }
+    this.router.navigate(['/events']);
   }
 }

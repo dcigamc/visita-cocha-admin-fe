@@ -90,20 +90,21 @@ src/
 ```
 
 ```typescript
-// Modelo: food
+// Modelo: events
 {
     "id": "",
     "available": true,
     "isFeatured": true,
     "description": "",
     "order": 20,
-    "name": "",
-    "rating": 5,
+    "title": "",
     "coverUrl": "",
-    "ingredients": [
-      "",
-      ""
-    ]
+    "gallery": ["", ""],
+    "color": "", // green, yellow,blue, red, black-lighten
+    "date": "", // timestamp
+    "foods": ["", ""],
+    "restaurants": ["", ""],
+    "attractions": ["", ""],
 }
 ```
 
@@ -126,8 +127,8 @@ src/
 
 - [x] Módulo Attractives (CRUD + relación foods)
 - [x] Módulo Restaurants (CRUD + relación foods)
-- [ ] Módulo Foods (CRUD + vista de relaciones inversas)
-- [ ] Módulo Events (CRUD + selector de todas las relaciones)
+- [x] Módulo Foods (CRUD + vista de relaciones inversas)
+- [x] Módulo Events (CRUD + selector de todas las relaciones)
 
 ### Fase 3 — Gestión de Usuarios
 

@@ -2,8 +2,8 @@
   <!-- Header -->
   <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
     <div class="overflow-hidden mr-4">
-      <h1 class="text-3xl font-bold text-slate-800 truncate" [title]="form.get('name')?.value">
-        {{ isEdit() ? 'Editar: ' + (form.get('name')?.value || 'Comida') : 'Nueva Comida' }}
+      <h1 class="text-3xl font-bold text-slate-800 truncate" [title]="form.get('title')?.value">
+        {{ isEdit() ? 'Editar: ' + (form.get('title')?.value || 'Evento') : 'Nuevo Evento' }}
       </h1>
       @if (isAdmin() && updatedAt()) {
       <p class="text-slate-400 text-xs mt-1 italic">
@@ -23,7 +23,7 @@
     <p-tabs [(value)]="activeTab">
       <p-tablist>
         <p-tab value="0">General</p-tab>
-        <p-tab value="1">Características</p-tab>
+        <p-tab value="1">Relaciones</p-tab>
         <p-tab value="2">Multimedia</p-tab>
       </p-tablist>
 
@@ -32,26 +32,33 @@
         <p-tabpanel value="0">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 p-fluid">
             <div class="flex flex-col gap-2">
-              <label for="name" class="font-semibold text-slate-700">Nombre</label>
-              <input pInputText id="name" formControlName="name" (blur)="generateSlug()"
-                placeholder="Ej: Silpancho" />
+              <label for="title" class="font-semibold text-slate-700">Título del Evento</label>
+              <input pInputText id="title" formControlName="title" placeholder="Ej: Festival de la Gastronomía" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label for="date" class="font-semibold text-slate-700">Fecha del Evento</label>
+              <p-datepicker id="date" formControlName="date" [showIcon]="true" dateFormat="dd/mm/yy" [showTime]="true" hourFormat="24"></p-datepicker>
+            </div>
+
+            <div class="flex flex-col md:col-span-2 gap-2">
+              <label for="description" class="font-semibold text-slate-700">Descripción / Detalles</label>
+              <textarea pInputTextarea id="description" formControlName="description" rows="4"
+                class="p-inputtext w-full"></textarea>
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label for="color" class="font-semibold text-slate-700">Color de etiqueta</label>
+              <p-select id="color" formControlName="color" [options]="colorOptions" optionLabel="label"
+                optionValue="value" class="w-full" appendTo="body"></p-select>
             </div>
 
             @if (isAdmin()) {
               <div class="flex flex-col gap-2">
-                <label for="slug" class="font-semibold text-slate-700">Slug</label>
-                <input pInputText id="slug" formControlName="slug" placeholder="silpancho" />
-                @if (form.get('slug')?.errors?.['pattern'] && form.get('slug')?.touched) {
-                  <small class="text-red-500">Formato inválido. Use solo minúsculas, números y guiones.</small>
-                }
+                <label for="order" class="font-semibold text-slate-700">Orden</label>
+                <p-inputnumber id="order" formControlName="order" [showButtons]="true" [min]="0"></p-inputnumber>
               </div>
             }
-
-            <div class="flex flex-col md:col-span-2 gap-2">
-              <label for="description" class="font-semibold text-slate-700">Descripción</label>
-              <textarea pInputTextarea id="description" formControlName="description" rows="4"
-                class="p-inputtext w-full"></textarea>
-            </div>
 
             <div class="flex items-center gap-10 mt-2 md:col-span-2">
               <div class="flex items-center gap-3">
@@ -67,53 +74,29 @@
           </div>
         </p-tabpanel>
 
-        <!-- Sección: Características -->
+        <!-- Sección: Relaciones -->
         <p-tabpanel value="1">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 p-fluid">
-            <div class="flex flex-col md:col-span-2 gap-2">
-              <label for="ingredients" class="font-semibold text-slate-700">Ingredientes Principales</label>
-
-              <!-- Input para agregar ingredientes -->
-              <div class="flex gap-2">
-                <input pInputText [formControl]="newIngredient" placeholder="Ej: Carne de res" 
-                  (keydown.enter)="$event.preventDefault(); addIngredient()" />
-                <p-button icon="pi pi-plus" (click)="addIngredient()" severity="info" [outlined]="true"></p-button>
-              </div>
-              <small class="text-slate-400 italic">Escribe un ingrediente y presiona Enter o el botón + para agregarlo.</small>
-
-              <!-- Lista de ingredientes agregados -->
-              <div class="flex flex-col gap-2 mt-3" formArrayName="ingredients">
-                @for (ing of ingredients.controls; track $index) {
-                  <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1 rounded-lg group">
-                    <i class="pi pi-bars text-slate-300 text-xs"></i>
-                    <input pInputText [formControlName]="$index" 
-                      class="flex-1 !border-none !bg-transparent !shadow-none !p-1 text-sm text-slate-700 focus:!ring-0" />
-                    <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger" 
-                      size="small" class="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" 
-                      (click)="removeIngredient($index)"></p-button>
-                  </div>
-                }
-                @if (ingredients.length === 0) {
-                  <div class="w-full p-4 text-center border-2 border-dashed border-slate-100 rounded-xl text-slate-400 text-sm">
-                    No se han agregado ingredientes aún.
-                  </div>
-                }
-              </div>
+            <div class="flex flex-col gap-2">
+              <label for="attractions" class="font-semibold text-slate-700">Atractivos Relacionados</label>
+              <p-multiselect id="attractions" formControlName="attractions" [options]="attractionsList()"
+                optionLabel="name" optionValue="id" placeholder="Seleccionar atractivos" display="chip"
+                class="w-full" appendTo="body"></p-multiselect>
             </div>
 
             <div class="flex flex-col gap-2">
-              <label for="rating" class="font-semibold text-slate-700">Puntuación sugerida</label>
-              <p-select id="rating" formControlName="rating" [options]="ratingOptions" optionLabel="label"
-                optionValue="value" class="w-full" appendTo="body"></p-select>
+              <label for="restaurants" class="font-semibold text-slate-700">Restaurantes Relacionados</label>
+              <p-multiselect id="restaurants" formControlName="restaurants" [options]="restaurantsList()"
+                optionLabel="name" optionValue="id" placeholder="Seleccionar restaurantes" display="chip"
+                class="w-full" appendTo="body"></p-multiselect>
             </div>
 
-
-            @if (isAdmin()) {
-              <div class="flex flex-col gap-2">
-                <label for="order" class="font-semibold text-slate-700">Orden</label>
-                <p-inputnumber id="order" formControlName="order" [showButtons]="true" [min]="0"></p-inputnumber>
-              </div>
-            }
+            <div class="flex flex-col gap-2">
+              <label for="foods" class="font-semibold text-slate-700">Comidas Relacionadas</label>
+              <p-multiselect id="foods" formControlName="foods" [options]="foodsList()"
+                optionLabel="name" optionValue="id" placeholder="Seleccionar comidas" display="chip"
+                class="w-full" appendTo="body"></p-multiselect>
+            </div>
           </div>
         </p-tabpanel>
 
@@ -123,8 +106,8 @@
             <!-- Imagen de Portada -->
             <div class="flex flex-col gap-4">
               <div class="flex flex-col gap-1">
-                <h3 class="text-lg font-bold text-slate-800">Imagen del Plato *</h3>
-                <p class="text-xs text-slate-400 max-w-xs">Esta imagen será la portada de presentación en el listado.</p>
+                <h3 class="text-lg font-bold text-slate-800">Imagen de Portada</h3>
+                <p class="text-xs text-slate-400 max-w-xs">Esta imagen será la portada del anuncio/evento.</p>
               </div>
 
               <div class="flex items-center gap-6">
@@ -143,7 +126,7 @@
                   class="w-48 h-48 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer text-slate-400 group"
                   (click)="coverInput.click()">
                   <i class="pi pi-upload text-3xl"></i>
-                  <span class="text-xs font-bold uppercase tracking-wider">Subir Imagen</span>
+                  <span class="text-xs font-bold uppercase tracking-wider">Subir Portada</span>
                 </div>
                 }
                 <input #coverInput type="file" class="hidden" accept="image/*" (change)="onCoverSelected($event)">

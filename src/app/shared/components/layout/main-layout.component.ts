@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -10,6 +10,16 @@ import { AuthService } from '../../../core/services/auth.service';
 export class MainLayoutComponent {
   private authService = inject(AuthService);
   user = this.authService.currentUser;
+
+  userRoleLabel = computed(() => {
+    const role = this.user()?.role;
+    switch (role) {
+      case 'superadmin': return 'Super Administrador';
+      case 'admin': return 'Administrador';
+      case 'maintainer': return 'Mantenimiento';
+      default: return role || 'Usuario';
+    }
+  });
 
   menuItems = [
     { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
