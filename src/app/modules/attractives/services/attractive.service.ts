@@ -3,8 +3,8 @@ import { FirestoreService } from '../../../core/services/firestore.service';
 import { AttractiveModel } from '../../../core/models/attractive.model';
 import { CategoryModel } from '../../../core/models/category.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { serverTimestamp, collection, doc } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { serverTimestamp, collection, doc, where, QueryConstraint } from '@angular/fire/firestore';
+import { Observable, of } from 'rxjs';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 
 @Injectable({
@@ -15,6 +15,32 @@ export class AttractiveService {
   private authService = inject(AuthService);
   private storage = inject(Storage);
   private collection = 'attractions';
+  private mainCategoriesCollection = 'main-categories';
+  private attractionsCategoriesCollection = 'attraction-categories';
+  private foodsCollection = 'foods';
+
+  /**
+   * Obtiene todos los atractivos permitidos para el usuario actual.
+   */
+  getAttractives(): Observable<AttractiveModel[]> {
+    const user = this.authService.currentUser();
+    if (!user) return of([]);
+
+    const constraints: QueryConstraint[] = [];
+
+    if (user.role !== 'superadmin') {
+      const perms = user.permissions?.attractives;
+      if (perms && !perms.fullAccess) {
+        if (perms.allowedIds && perms.allowedIds.length > 0) {
+          constraints.push(where('__name__', 'in', perms.allowedIds));
+        } else {
+          return of([]);
+        }
+      }
+    }
+
+    return this.firestoreService.getAll<AttractiveModel>(this.collection, constraints);
+  }
 
   /**
    * Genera un ID único para un nuevo atractivo.
@@ -43,16 +69,6 @@ export class AttractiveService {
     } catch (error) {
       console.warn('Error deleting file from storage (might not exist):', error);
     }
-  }
-  private mainCategoriesCollection = 'main-categories';
-  private attractionsCategoriesCollection = 'attraction-categories';
-  private foodsCollection = 'foods';
-
-  /**
-   * Obtiene todos los atractivos.
-   */
-  getAttractives(): Observable<AttractiveModel[]> {
-    return this.firestoreService.getAll<AttractiveModel>(this.collection);
   }
 
   /**

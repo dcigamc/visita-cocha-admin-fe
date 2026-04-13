@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, doc, serverTimestamp } from '@angular/fire/firestore';
+import { Firestore, collection, doc, serverTimestamp, where, QueryConstraint } from '@angular/fire/firestore';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { EventModel } from '../../../core/models/event.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 
 @Injectable({
@@ -19,6 +19,29 @@ export class EventService {
   private foodsCollection = 'foods';
   private restaurantsCollection = 'restaurants';
   private attractivesCollection = 'attractions';
+
+  /**
+   * Obtiene todos los eventos permitidos para el usuario actual.
+   */
+  getEvents(): Observable<EventModel[]> {
+    const user = this.authService.currentUser();
+    if (!user) return of([]);
+
+    const constraints: QueryConstraint[] = [];
+
+    if (user.role !== 'superadmin') {
+      const perms = user.permissions?.events;
+      if (perms && !perms.fullAccess) {
+        if (perms.allowedIds && perms.allowedIds.length > 0) {
+          constraints.push(where('__name__', 'in', perms.allowedIds));
+        } else {
+          return of([]);
+        }
+      }
+    }
+
+    return this.firestoreService.getAll<EventModel>(this.collection, constraints);
+  }
 
   /**
    * Genera un ID único para un nuevo evento.
@@ -47,13 +70,6 @@ export class EventService {
     } catch (error) {
       console.warn('Error deleting file from storage (might not exist):', error);
     }
-  }
-
-  /**
-   * Obtiene todos los eventos.
-   */
-  getEvents(): Observable<EventModel[]> {
-    return this.firestoreService.getAll<EventModel>(this.collection);
   }
 
   /**

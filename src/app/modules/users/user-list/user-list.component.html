@@ -1,0 +1,108 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800">Usuarios</h1>
+      <p class="text-slate-500 mt-1">Gestión de accesos y roles administrativos</p>
+    </div>
+    <p-button label="Nuevo Usuario" icon="pi pi-user-plus" (click)="create()" *hasPermission="'users:create'"
+      severity="primary"></p-button>
+  </div>
+
+  <!-- Table Card -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <p-table #dt [value]="users() || []" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 20]"
+      responsiveLayout="stack" [globalFilterFields]="['displayName', 'email', 'role']" [rowHover]="true"
+      class="p-datatable-sm">
+      
+      <!-- Table Caption -->
+      <ng-template pTemplate="caption">
+        <div class="flex justify-between items-center">
+          <span class="p-input-icon-left w-full md:w-80 flex items-center gap-3">
+            <input pInputText type="text" (input)="$any(dt).filterGlobal($any($event.target).value, 'contains')"
+              placeholder="Buscar por nombre, email o rol..."
+              class="w-full pl-10 border-slate-200 focus:ring-blue-500 rounded-lg text-sm" />
+          </span>
+          <div class="hidden md:block">
+            <span class="text-sm text-slate-400">Total: {{users()?.length || 0}} usuarios</span>
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr class="bg-slate-50 text-slate-600 uppercase text-xs font-bold tracking-wider">
+          <th pSortableColumn="displayName">Nombre <p-sortIcon field="displayName"></p-sortIcon></th>
+          <th pSortableColumn="email">Email <p-sortIcon field="email"></p-sortIcon></th>
+          <th pSortableColumn="role">Rol <p-sortIcon field="role"></p-sortIcon></th>
+          <th class="text-center">Estado</th>
+          <th class="w-24 text-center pr-6">Acciones</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-user>
+        <tr class="hover:bg-slate-50/50 transition-colors">
+          <td>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs border border-slate-200">
+                {{ user.displayName?.charAt(0) || 'U' }}
+              </div>
+              <span class="font-bold text-slate-800">{{ user.displayName }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="text-sm text-slate-600">{{ user.email }}</span>
+          </td>
+          <td>
+            <p-tag [value]="getRoleLabel(user.role)" [severity]="getRoleSeverity(user.role)"></p-tag>
+          </td>
+          <td class="text-center">
+            @if (canUpdateUsers()) {
+              <p-toggleswitch [ngModel]="user.isActive" (onChange)="toggleStatus(user)" 
+                pTooltip="Activar/Desactivar"></p-toggleswitch>
+            } @else {
+              <i [class]="user.isActive ? 'pi pi-check-circle text-green-500' : 'pi pi-times-circle text-red-500'" class="text-lg"></i>
+            }
+          </td>
+          <td class="pr-6 text-center">
+            <div class="flex justify-end gap-2">
+              <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" (click)="edit(user)"
+                *hasPermission="'users:update'" pTooltip="Editar"></p-button>
+              
+              @if (isSuperAdmin()) {
+                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (click)="delete(user)"
+                  pTooltip="Eliminar"></p-button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty State -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="p-12 text-center">
+            <div class="flex flex-col items-center gap-3">
+              <i class="pi pi-users text-5xl text-slate-200"></i>
+              <span class="text-slate-400 font-medium">No se encontraron usuarios</span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- User Edit/Create Modal -->
+  <p-dialog [(visible)]="displayEditModal" [modal]="true" 
+    [header]="selectedUser() ? 'Editar Usuario: ' + selectedUser()?.displayName : 'Nuevo Usuario'"
+    [style]="{width: '60vw'}" [breakpoints]="{'960px': '85vw', '640px': '95vw'}" [dismissableMask]="true">
+    
+    @if (displayEditModal()) {
+      <app-user-form 
+        [userToEdit]="selectedUser()" 
+        (onSave)="displayEditModal.set(false)" 
+        (onCancel)="displayEditModal.set(false)">
+      </app-user-form>
+    }
+
+  </p-dialog>
+</div>

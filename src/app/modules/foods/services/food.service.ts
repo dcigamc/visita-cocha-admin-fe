@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, doc, serverTimestamp } from '@angular/fire/firestore';
+import { Firestore, collection, doc, serverTimestamp, where, QueryConstraint } from '@angular/fire/firestore';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { FoodModel } from '../../../core/models/food.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 
 @Injectable({
@@ -16,6 +16,29 @@ export class FoodService {
   private storage = inject(Storage);
   
   private collection = 'foods';
+
+  /**
+   * Obtiene todas las comidas permitidas para el usuario actual.
+   */
+  getFoods(): Observable<FoodModel[]> {
+    const user = this.authService.currentUser();
+    if (!user) return of([]);
+
+    const constraints: QueryConstraint[] = [];
+
+    if (user.role !== 'superadmin') {
+      const perms = user.permissions?.foods;
+      if (perms && !perms.fullAccess) {
+        if (perms.allowedIds && perms.allowedIds.length > 0) {
+          constraints.push(where('__name__', 'in', perms.allowedIds));
+        } else {
+          return of([]);
+        }
+      }
+    }
+
+    return this.firestoreService.getAll<FoodModel>(this.collection, constraints);
+  }
 
   /**
    * Genera un ID único para una nueva comida.
@@ -44,13 +67,6 @@ export class FoodService {
     } catch (error) {
       console.warn('Error deleting file from storage (might not exist):', error);
     }
-  }
-
-  /**
-   * Obtiene todas las comidas.
-   */
-  getFoods(): Observable<FoodModel[]> {
-    return this.firestoreService.getAll<FoodModel>(this.collection);
   }
 
   /**

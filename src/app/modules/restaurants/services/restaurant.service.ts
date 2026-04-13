@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, doc, serverTimestamp } from '@angular/fire/firestore';
+import { Firestore, collection, doc, serverTimestamp, where, QueryConstraint } from '@angular/fire/firestore';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { RestaurantModel } from '../../../core/models/restaurant.model';
 import { CategoryModel } from '../../../core/models/category.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 
 @Injectable({
@@ -20,6 +20,29 @@ export class RestaurantService {
   private restaurantCategoriesCollection = 'restaurant-categories';
   private mainCategoriesCollection = 'main-categories';
   private foodsCollection = 'foods';
+
+  /**
+   * Obtiene todos los restaurantes permitidos para el usuario actual.
+   */
+  getRestaurants(): Observable<RestaurantModel[]> {
+    const user = this.authService.currentUser();
+    if (!user) return of([]);
+
+    const constraints: QueryConstraint[] = [];
+
+    if (user.role !== 'superadmin') {
+      const perms = user.permissions?.restaurants;
+      if (perms && !perms.fullAccess) {
+        if (perms.allowedIds && perms.allowedIds.length > 0) {
+          constraints.push(where('__name__', 'in', perms.allowedIds));
+        } else {
+          return of([]);
+        }
+      }
+    }
+
+    return this.firestoreService.getAll<RestaurantModel>(this.collection, constraints);
+  }
 
   /**
    * Genera un ID único para un nuevo restaurante.
@@ -48,13 +71,6 @@ export class RestaurantService {
     } catch (error) {
       console.warn('Error deleting file from storage (might not exist):', error);
     }
-  }
-
-  /**
-   * Obtiene todos los restaurantes.
-   */
-  getRestaurants(): Observable<RestaurantModel[]> {
-    return this.firestoreService.getAll<RestaurantModel>(this.collection);
   }
 
   /**

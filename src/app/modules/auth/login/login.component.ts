@@ -36,7 +36,7 @@ export class LoginComponent {
       this.router.navigateByUrl(returnUrl);
     } catch (error: any) {
       console.error(error);
-      this.errorMessage.set('Credenciales inválidas o error de conexión.');
+      this.errorMessage.set('Credenciales inválidas.');
     } finally {
       this.isLoading.set(false);
     }

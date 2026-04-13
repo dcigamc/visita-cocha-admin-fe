@@ -1,0 +1,109 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 p-2">
+  
+  <!-- Sección: Información Básica -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-fluid">
+    <div class="flex flex-col gap-2">
+      <label for="displayName" class="text-sm font-bold text-slate-600">Nombre Completo</label>
+      <input pInputText id="displayName" formControlName="displayName" placeholder="Ej: Juan Pérez" />
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="email" class="text-sm font-bold text-slate-600">Correo Electrónico</label>
+      <input pInputText id="email" formControlName="email" placeholder="usuario@gmail.com" />
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="role" class="text-sm font-bold text-slate-600">Rol de Usuario</label>
+      <p-select id="role" [options]="roles()" formControlName="role" optionLabel="label" optionValue="value" appendTo="body"></p-select>
+    </div>
+
+    <div class="flex items-center gap-3 mt-auto mb-2">
+      <p-toggleswitch formControlName="isActive"></p-toggleswitch>
+      <label class="text-sm font-bold text-slate-600">Usuario Activo</label>
+    </div>
+  </div>
+
+  <p-divider align="left">
+    <div class="inline-flex align-items-center text-primary font-bold">
+      <i class="pi pi-shield mr-2"></i>
+      <span>MATRIZ DE PERMISOS GRANULARES</span>
+    </div>
+  </p-divider>
+
+  <!-- Sección: Matriz de Permisos -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden" formGroupName="permissions">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+          <tr>
+            <th class="p-4 border-b border-slate-100">Módulo</th>
+            <th class="p-4 border-b border-slate-100 text-center">Acceso Total</th>
+            <th class="p-4 border-b border-slate-100">Acciones Específicas</th>
+            <th class="p-4 border-b border-slate-100">Documentos Permitidos (ID)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (mod of modules; track mod) {
+            <tr [formGroupName]="mod" class="hover:bg-slate-50/50 transition-colors">
+              <td class="p-4 font-bold text-slate-700">
+                {{ moduleLabels[mod] }}
+              </td>
+              
+              <td class="p-4 text-center">
+                <p-checkbox formControlName="fullAccess" [binary]="true" (onChange)="toggleFullAccess(mod)" pTooltip="Conceder acceso a todos los documentos del módulo"></p-checkbox>
+              </td>
+
+              <td class="p-4" formGroupName="actions">
+                <div class="flex gap-4 items-center">
+                  <div class="flex items-center gap-1.5" pTooltip="Crear">
+                    <p-checkbox formControlName="create" [binary]="true"></p-checkbox>
+                    <span class="text-[10px] font-bold text-slate-400">C</span>
+                  </div>
+                  <div class="flex items-center gap-1.5" pTooltip="Leer">
+                    <p-checkbox formControlName="read" [binary]="true"></p-checkbox>
+                    <span class="text-[10px] font-bold text-slate-400">R</span>
+                  </div>
+                  <div class="flex items-center gap-1.5" pTooltip="Actualizar">
+                    <p-checkbox formControlName="update" [binary]="true"></p-checkbox>
+                    <span class="text-[10px] font-bold text-slate-400">U</span>
+                  </div>
+                  <div class="flex items-center gap-1.5" pTooltip="Eliminar">
+                    <p-checkbox formControlName="delete" [binary]="true"></p-checkbox>
+                    <span class="text-[10px] font-bold text-slate-400">D</span>
+                  </div>
+                </div>
+              </td>
+
+              <td class="p-4 min-w-[250px]">
+                @if (hasResourceSelection(mod)) {
+                  <p-multiselect 
+                    formControlName="allowedIds" 
+                    [options]="resources[mod]()" 
+                    [optionLabel]="mod === 'events' ? 'title' : 'name'" 
+                    optionValue="id"
+                    [disabled]="form.get('permissions.' + mod + '.fullAccess')?.value"
+                    placeholder="Elegir específicos..." 
+                    display="chip" 
+                    class="w-full"
+                    appendTo="body"
+                    [filter]="true"
+                    scrollHeight="200px">
+                  </p-multiselect>
+                } @else {
+                  <span class="text-xs text-slate-300 italic">No aplica filtrado ID</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Footer del Formulario -->
+  <div class="flex justify-end gap-3 mt-4">
+    <p-button label="Cancelar" [text]="true" severity="secondary" (click)="cancel()"></p-button>
+    <p-button type="submit" label="Guardar Perfil" [loading]="isLoading()" [disabled]="form.invalid" severity="primary"></p-button>
+  </div>
+
+</form>
