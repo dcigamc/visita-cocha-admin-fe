@@ -130,11 +130,13 @@ src/
 - [x] Módulo Foods (CRUD + vista de relaciones inversas)
 - [x] Módulo Events (CRUD + selector de todas las relaciones)
 
-### Fase 3 — Gestión de Usuarios
+### Fase 3 — Gestión de Usuarios (COMPLETADA ✅)
 
-- [ ] Módulo Users con listado y filtros por rol
-- [ ] Formulario de creación con asignación de rol
-- [ ] `PermissionMatrixComponent` para asignación granular
+- [x] Módulo Users con listado y filtros jerárquicos por rol (Admin solo ve Maintainers).
+- [x] Edición de usuarios vía modal con actualización completa de perfil.
+- [x] **Matriz de Permisos Granulares**: Configuración por módulo y por acciones (CRUD).
+- [x] **Control de Acceso por Documento**: Implementación de `allowedIds` para restringir el acceso a registros específicos en Atractivos, Restaurantes, Comidas y Eventos.
+- [x] Filtrado automático en servicios basado en los permisos del usuario logueado.
 
 ### Fase 4 — Logs y Auditoría (COMPLETADA ✅)
 
