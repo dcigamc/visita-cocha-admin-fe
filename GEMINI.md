@@ -136,10 +136,12 @@ src/
 - [ ] Formulario de creación con asignación de rol
 - [ ] `PermissionMatrixComponent` para asignación granular
 
-### Fase 4 — Logs y Auditoría
+### Fase 4 — Logs y Auditoría (COMPLETADA ✅)
 
-- [ ] `LogService` integrado en todos los servicios CRUD
-- [ ] Módulo Logs con filtros avanzados y diff viewer
+- [x] `LogService` integrado en todos los servicios CRUD.
+- [x] Implementación de `getLogs()` con filtrado de seguridad por rol (Superadmin ve todo, Admin/Maintainer solo lo propio).
+- [x] Módulo de visualización con tabla PrimeNG y visor de detalles JSON (Anterior vs Nuevo).
+- [x] Resolución de dependencia circular usando funciones nativas de Firestore.
 
 ### Fase 5 — Pulido
 

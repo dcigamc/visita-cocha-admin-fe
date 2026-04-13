@@ -4,10 +4,15 @@ import {
   collection, 
   addDoc, 
   serverTimestamp, 
-  Timestamp 
+  Timestamp,
+  query,
+  where,
+  orderBy,
+  onSnapshot
 } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
 import { LogAction, LogModule, LogModel } from '../models/log.model';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +20,35 @@ import { LogAction, LogModule, LogModel } from '../models/log.model';
 export class LogService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
+
+  /**
+   * Obtiene los logs en tiempo real filtrados por rol.
+   */
+  getLogs(): Observable<LogModel[]> {
+    return new Observable<LogModel[]>(subscriber => {
+      const user = this.authService.currentUser();
+      const logsRef = collection(this.firestore, 'logs');
+      
+      let q = query(logsRef, orderBy('metadata.timestamp', 'desc'));
+
+      // Filtro para roles que no sean superadmin
+      if (user?.role !== 'superadmin') {
+        q = query(logsRef, where('userId', '==', user?.uid), orderBy('metadata.timestamp', 'desc'));
+      }
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const logs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as LogModel));
+        subscriber.next(logs);
+      }, (error) => {
+        subscriber.error(error);
+      });
+
+      return () => unsubscribe();
+    });
+  }
 
   /**
    * Registra una acción de auditoría en Firestore.
