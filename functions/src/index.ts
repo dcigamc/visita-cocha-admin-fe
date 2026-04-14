@@ -1,10 +1,51 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
+import {BetaAnalyticsDataClient} from "@google-analytics/data";
 
 admin.initializeApp();
 
 const db = admin.firestore();
+const analyticsClient = new BetaAnalyticsDataClient();
+
+/**
+ * Obtiene un resumen de métricas desde Google Analytics 4 (Últimos 7 días).
+ */
+export const getAnalyticsSummary = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Usuario no autenticado.");
+  }
+
+  // Se recomienda configurar vía: firebase functions:secrets:set GA4_PROPERTY_ID=tu_id
+  const propertyId = process.env.GA4_PROPERTY_ID;
+
+  if (!propertyId) {
+    logger.warn("GA4_PROPERTY_ID no configurado");
+    return { activeUsers: 0, sessions: 0, screenPageViews: 0 };
+  }
+
+  try {
+    const [response] = await analyticsClient.runReport({
+      property: `properties/${propertyId}`,
+      dateRanges: [{ startDate: "7daysAgo", endDate: "today" }],
+      metrics: [
+        { name: "activeUsers" },
+        { name: "sessions" },
+        { name: "screenPageViews" },
+      ],
+    });
+
+    const values = response.rows?.[0]?.metricValues || [];
+    return {
+      activeUsers: parseInt(values[0]?.value || "0"),
+      sessions: parseInt(values[1]?.value || "0"),
+      screenPageViews: parseInt(values[2]?.value || "0"),
+    };
+  } catch (error: unknown) {
+    logger.error("Error al obtener analytics", error);
+    throw new HttpsError("internal", "Error al recuperar datos de Analytics.");
+  }
+});
 
 /**
  * Crea un nuevo usuario en Firebase Auth y su perfil en Firestore.

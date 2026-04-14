@@ -10,7 +10,7 @@ import { AttractiveService } from '../../attractives/services/attractive.service
 import { RestaurantService } from '../../restaurants/services/restaurant.service';
 import { FoodService } from '../../foods/services/food.service';
 import { EventService } from '../../events/services/event.service';
-import { CategoryService } from '../../categories/services/category.service';
+import { CategoryService, CategoryType } from '../../categories/services/category.service';
 
 @Component({
   selector: 'app-user-form',

@@ -1,100 +1,153 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed, signal, OnInit } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { FirestoreService } from '../../core/services/firestore.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { map, forkJoin, of } from 'rxjs';
+import { Functions, httpsCallable } from '@angular/fire/functions';
+
+interface AnalyticsSummary {
+  activeUsers: number;
+  sessions: number;
+  screenPageViews: number;
+}
 
 @Component({
   selector: 'app-dashboard',
-  template: `
-    <div class="p-8 space-y-8">
-      @if (authService.isLoading()) {
-        <div class="flex items-center gap-2">
-          <i class="pi pi-spin pi-spinner text-2xl text-primary"></i>
-          <span class="text-slate-600 font-medium">Cargando dashboard...</span>
-        </div>
-      } @else {
-        <!-- Welcome Section -->
-        <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-          <div class="relative z-10">
-            <h1 class="text-4xl font-bold text-slate-800">¡Hola, {{ user()?.displayName || 'Bienvenido' }}!</h1>
-            <p class="text-slate-500 mt-2 text-lg">Bienvenido al panel administrativo de Visita Cocha.</p>
-          </div>
-          <!-- Decorative Background Icon -->
-          <i class="pi pi-map-marker absolute -right-4 -bottom-4 text-9xl text-slate-50 opacity-[0.03] rotate-12"></i>
-        </div>
-
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <!-- Attractives Card -->
-          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <i class="pi pi-map text-xl"></i>
-              </div>
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Atractivos</span>
-            </div>
-            <div class="flex flex-col">
-              <span class="text-3xl font-bold text-slate-800">{{ attractivesCount() || 0 }}</span>
-              <span class="text-sm text-slate-500 mt-1">Registrados</span>
-            </div>
-          </div>
-
-          <!-- Restaurants Card -->
-          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors">
-                <i class="pi pi-shop text-xl"></i>
-              </div>
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Restaurantes</span>
-            </div>
-            <div class="flex flex-col">
-              <span class="text-3xl font-bold text-slate-800">{{ restaurantsCount() || 0 }}</span>
-              <span class="text-sm text-slate-500 mt-1">Establecimientos</span>
-            </div>
-          </div>
-
-          <!-- Foods Card -->
-          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors">
-                <i class="pi pi-heart-fill text-xl"></i>
-              </div>
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Comidas</span>
-            </div>
-            <div class="flex flex-col">
-              <span class="text-3xl font-bold text-slate-800">{{ foodsCount() || 0 }}</span>
-              <span class="text-sm text-slate-500 mt-1">Platos típicos</span>
-            </div>
-          </div>
-
-          <!-- Events Card -->
-          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
-            <div class="flex items-center justify-between mb-4">
-              <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                <i class="pi pi-calendar text-xl"></i>
-              </div>
-              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Eventos</span>
-            </div>
-            <div class="flex flex-col">
-              <span class="text-3xl font-bold text-slate-800">{{ eventsCount() || 0 }}</span>
-              <span class="text-sm text-slate-500 mt-1">Activos</span>
-            </div>
-          </div>
-        </div>
-      }
-    </div>
-  `,
+  templateUrl: './dashboard.component.html',
   standalone: false
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   public authService = inject(AuthService);
   private firestoreService = inject(FirestoreService);
+  private functions = inject(Functions);
   
   user = this.authService.currentUser;
 
+  // Analytics Signals
+  analyticsData = signal<AnalyticsSummary | null>(null);
+  isAnalyticsLoading = signal(false);
+
+  // Stats Signals
   attractivesCount = toSignal(this.firestoreService.getAll('attractions').pipe(map(list => list.length)));
   restaurantsCount = toSignal(this.firestoreService.getAll('restaurants').pipe(map(list => list.length)));
   foodsCount = toSignal(this.firestoreService.getAll('foods').pipe(map(list => list.length)));
   eventsCount = toSignal(this.firestoreService.getAll('announcements').pipe(map(list => list.length)));
+  usersCount = toSignal(this.firestoreService.getAll('users').pipe(map(list => list.length)));
+  
+  // Categories Count (Only main-categories)
+  categoriesCount = toSignal(
+    this.firestoreService.getAll('main-categories').pipe(
+      map(list => list.length)
+    )
+  );
+
+  ngOnInit() {
+    this.loadAnalytics();
+  }
+
+  async loadAnalytics() {
+    this.isAnalyticsLoading.set(true);
+    try {
+      const getSummary = httpsCallable<any, AnalyticsSummary>(this.functions, 'getAnalyticsSummary');
+      const result = await getSummary();
+      this.analyticsData.set(result.data);
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    } finally {
+      this.isAnalyticsLoading.set(false);
+    }
+  }
+
+  // Chart Data
+  chartData = computed(() => {
+    const labels = ['Atractivos', 'Restaurantes', 'Comidas', 'Eventos'];
+    const data = [
+      this.attractivesCount() || 0,
+      this.restaurantsCount() || 0,
+      this.foodsCount() || 0,
+      this.eventsCount() || 0
+    ];
+
+    return {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Distribución de Contenido',
+          data: data,
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(255, 159, 64, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(153, 102, 255, 0.6)'
+          ],
+          borderColor: [
+            'rgb(54, 162, 235)',
+            'rgb(255, 159, 64)',
+            'rgb(75, 192, 192)',
+            'rgb(153, 102, 255)'
+          ],
+          borderWidth: 1
+        }
+      ]
+    };
+  });
+
+  chartOptions = {
+    plugins: {
+      legend: {
+        display: false
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        }
+      },
+      x: {
+        grid: {
+          display: false
+        }
+      }
+    },
+    responsive: true,
+    maintainAspectRatio: false
+  };
+
+  pieData = computed(() => {
+    return {
+      labels: ['Atractivos', 'Restaurantes', 'Comidas', 'Eventos'],
+      datasets: [
+        {
+          data: [
+            this.attractivesCount() || 0,
+            this.restaurantsCount() || 0,
+            this.foodsCount() || 0,
+            this.eventsCount() || 0
+          ],
+          backgroundColor: [
+            '#3b82f6',
+            '#f97316',
+            '#10b981',
+            '#a855f7'
+          ]
+        }
+      ]
+    };
+  });
+
+  pieOptions = {
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          padding: 20
+        }
+      }
+    },
+    responsive: true,
+    maintainAspectRatio: false
+  };
 }

@@ -1,0 +1,184 @@
+<div class="p-8 space-y-8 bg-slate-50 min-h-screen">
+  @if (authService.isLoading()) {
+    <div class="flex items-center justify-center min-h-[60vh] flex-col gap-4">
+      <i class="pi pi-spin pi-spinner text-4xl text-primary"></i>
+      <span class="text-slate-600 font-medium">Cargando estadísticas...</span>
+    </div>
+  } @else {
+    <!-- Welcome Section -->
+    <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+      <div class="relative z-10">
+        <h1 class="text-4xl font-bold text-slate-800">¡Hola, {{ user()?.displayName || 'Bienvenido' }}!</h1>
+        <p class="text-slate-500 mt-2 text-lg">Resumen general de la plataforma Visita Cocha.</p>
+      </div>
+      <!-- Decorative Background Icon -->
+      <i class="pi pi-chart-bar absolute -right-4 -bottom-4 text-9xl text-slate-50 opacity-[0.05] rotate-12"></i>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <!-- Attractives -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+            <i class="pi pi-map text-lg"></i>
+          </div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Atractivos</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-2xl font-bold text-slate-800">{{ attractivesCount() || 0 }}</span>
+          <span class="text-xs text-slate-500 mt-1">Registrados</span>
+        </div>
+      </div>
+
+      <!-- Restaurants -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600">
+            <i class="pi pi-shop text-lg"></i>
+          </div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Restaurantes</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-2xl font-bold text-slate-800">{{ restaurantsCount() || 0 }}</span>
+          <span class="text-xs text-slate-500 mt-1">Establecimientos</span>
+        </div>
+      </div>
+
+      <!-- Foods -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+            <i class="pi pi-heart-fill text-lg"></i>
+          </div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Comidas</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-2xl font-bold text-slate-800">{{ foodsCount() || 0 }}</span>
+          <span class="text-xs text-slate-500 mt-1">Platos típicos</span>
+        </div>
+      </div>
+
+      <!-- Events -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+            <i class="pi pi-calendar text-lg"></i>
+          </div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Eventos</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-2xl font-bold text-slate-800">{{ eventsCount() || 0 }}</span>
+          <span class="text-xs text-slate-500 mt-1">Anunciados</span>
+        </div>
+      </div>
+
+      @if (user()?.role === 'superadmin') {
+        <!-- Users -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-slate-600">
+              <i class="pi pi-users text-lg"></i>
+            </div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Usuarios</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-2xl font-bold text-slate-800">{{ usersCount() || 0 }}</span>
+            <span class="text-xs text-slate-500 mt-1">Cuentas</span>
+          </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm group">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
+              <i class="pi pi-tags text-lg"></i>
+            </div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Categorías</span>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-2xl font-bold text-slate-800">{{ categoriesCount() || 0 }}</span>
+            <span class="text-xs text-slate-500 mt-1">Principales</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-slate-800">Estadísticas</h2>
+        <span class="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">ÚLTIMOS 7 DÍAS</span>
+      </div>
+
+      @if (isAnalyticsLoading()) {
+        <div class="flex items-center gap-3 p-8 bg-white rounded-2xl border border-slate-100 shadow-sm justify-center">
+          <i class="pi pi-spin pi-spinner text-blue-500"></i>
+          <span class="text-slate-500 text-sm">Consultando Google Analytics...</span>
+        </div>
+      } @else if (analyticsData()) {
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Active Users -->
+          <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-sm text-white relative overflow-hidden">
+            <div class="relative z-10">
+              <span class="text-[10px] font-bold opacity-80 uppercase tracking-widest">Usuarios Activos</span>
+              <div class="text-3xl font-black mt-1">{{ analyticsData()?.activeUsers || 0 }}</div>
+              <p class="text-[10px] mt-2 opacity-70 italic">* Usuarios únicos en la app</p>
+            </div>
+            <i class="pi pi-users absolute -right-2 -bottom-2 text-6xl opacity-10"></i>
+          </div>
+
+          <!-- Sessions -->
+          <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 p-6 rounded-2xl shadow-sm text-white relative overflow-hidden">
+            <div class="relative z-10">
+              <span class="text-[10px] font-bold opacity-80 uppercase tracking-widest">Sesiones Totales</span>
+              <div class="text-3xl font-black mt-1">{{ analyticsData()?.sessions || 0 }}</div>
+              <p class="text-[10px] mt-2 opacity-70 italic">* Interacciones totales</p>
+            </div>
+            <i class="pi pi-sync absolute -right-2 -bottom-2 text-6xl opacity-10"></i>
+          </div>
+
+          <!-- Page Views -->
+          <div class="bg-gradient-to-br from-violet-500 to-violet-600 p-6 rounded-2xl shadow-sm text-white relative overflow-hidden">
+            <div class="relative z-10">
+              <span class="text-[10px] font-bold opacity-80 uppercase tracking-widest">Vistas de Pantalla</span>
+              <div class="text-3xl font-black mt-1">{{ analyticsData()?.screenPageViews || 0 }}</div>
+              <p class="text-[10px] mt-2 opacity-70 italic">* Pantallas navegadas</p>
+            </div>
+            <i class="pi pi-eye absolute -right-2 -bottom-2 text-6xl opacity-10"></i>
+          </div>
+        </div>
+      } @else {
+        <div class="p-6 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-3 text-amber-700">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span class="text-sm">Configura el <b>GA4_PROPERTY_ID</b> en las Cloud Functions para ver el tráfico real.</span>
+        </div>
+      }
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Bar Chart -->
+      <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-slate-800">Distribución de contenido</h2>
+          <i class="pi pi-info-circle text-slate-400 cursor-help" pTooltip="Cantidad total de registros por módulo"></i>
+        </div>
+        <div class="h-80">
+          <p-chart type="bar" [data]="chartData()" [options]="chartOptions"></p-chart>
+        </div>
+      </div>
+
+      <!-- Pie Chart -->
+      <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold text-slate-800">Total de módulos</h2>
+          <i class="pi pi-info-circle text-slate-400 cursor-help" pTooltip="Porcentaje de cada tipo de contenido"></i>
+        </div>
+        <div class="h-80">
+          <p-chart type="doughnut" [data]="pieData()" [options]="pieOptions"></p-chart>
+        </div>
+      </div>
+    </div>
+  }
+</div>
