@@ -2,10 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { CategoryModel } from '../../../core/models/category.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { serverTimestamp, QueryConstraint } from '@angular/fire/firestore';
+import { serverTimestamp, QueryConstraint, orderBy } from '@angular/fire/firestore';
 import { Observable, of } from 'rxjs';
 
-export type CategoryType = 'main-categories' | 'attraction-categories' | 'restaurant-categories';
+export type CategoryType = 'main-categories' | 'attraction-categories' | 'restaurant-categories' | 'event-categories' | 'hotel-categories';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +21,9 @@ export class CategoryService {
     const user = this.authService.currentUser();
     if (!user) return of([]);
 
-    const constraints: QueryConstraint[] = [];
+    const constraints: QueryConstraint[] = [
+      orderBy('order', 'asc')
+    ];
     // Las categorías suelen ser gestionadas solo por admins, 
     // pero si un mantenedor tuviera acceso, se aplicaría filtrado aquí si fuera necesario.
     

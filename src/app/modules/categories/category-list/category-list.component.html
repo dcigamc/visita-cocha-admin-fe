@@ -19,7 +19,8 @@
     <p-selectbutton 
       [options]="categoryTypes" 
       [ngModel]="selectedType()"
-      (ngModelChange)="selectedType.set($event)"
+      (ngModelChange)="$event && selectedType.set($event)"
+      [unselectable]="false"
       optionLabel="label" 
       optionValue="value"
       class="custom-select-button">
@@ -41,7 +42,7 @@
         <tr class="bg-slate-50 text-slate-600 uppercase text-xs font-bold tracking-wider">
           <th class="w-16">Icono</th>
           <th>Nombre</th>
-          <th>Slug</th>
+          <th class="text-center">Orden</th>
           <th class="text-center">Estado</th>
           <th class="w-24 text-center pr-6">Acciones</th>
         </tr>
@@ -51,11 +52,15 @@
         <tr class="hover:bg-slate-50/50 transition-colors">
           <td>
             <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-50 text-slate-400 border border-slate-100 shadow-sm">
-              <i [class]="category.icon || 'pi pi-tag'"></i>
+              <ion-icon [name]="category.icon || 'tag-outline'" class="text-xl"></ion-icon>
             </div>
           </td>
           <td class="font-bold text-slate-800">{{category.name}}</td>
-          <td class="text-slate-500 font-mono text-xs">{{category.slug}}</td>
+          <td class="text-center">
+            <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold">
+              #{{category.order ?? 0}}
+            </span>
+          </td>
           <td class="text-center">
             @if (category.available) {
               <i class="pi pi-check-circle text-green-500 text-lg" pTooltip="Disponible"></i>
@@ -88,7 +93,7 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="5" class="p-12 text-center">
+          <td colspan="4" class="p-12 text-center">
             <div class="flex flex-col items-center gap-3">
               <i class="pi pi-inbox text-5xl text-slate-200"></i>
               <span class="text-slate-400 font-medium">No se encontraron categorías en esta sección</span>

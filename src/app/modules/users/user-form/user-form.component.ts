@@ -188,11 +188,20 @@ export class UserFormComponent implements OnInit {
     this.foodService.getFoods().subscribe(data => this.resources['foods'].set(data));
     this.eventService.getEvents().subscribe(data => this.resources['events'].set(data));
 
-    // Cargar categorías de las 3 colecciones
+    // Cargar categorías de las colecciones correspondientes
     const allCats: any[] = [];
-    ['main-categories', 'attraction-categories', 'restaurant-categories'].forEach((type: any) => {
+    const categoryCollections: CategoryType[] = [
+      'main-categories', 
+      'attraction-categories', 
+      'restaurant-categories', 
+      'event-categories', 
+      'hotel-categories'
+    ];
+
+    categoryCollections.forEach((type) => {
       this.categoryService.getCategories(type).subscribe(data => {
-        const labeled = data.map(c => ({ ...c, name: `(${type.split('-')[0]}) ${c.name}` }));
+        const prefix = type.split('-')[0];
+        const labeled = data.map(c => ({ ...c, name: `(${prefix}) ${c.name}` }));
         // Combinamos y evitamos duplicados por ID si los hubiera
         labeled.forEach(cat => {
           if (!allCats.find(existing => existing.id === cat.id)) {

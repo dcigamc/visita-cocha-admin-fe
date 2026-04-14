@@ -3,5 +3,7 @@ export interface CategoryModel {
   name: string;
   slug: string;
   icon?: string;
+  photoUrl?: string;
   available: boolean;
+  order: number;
 }

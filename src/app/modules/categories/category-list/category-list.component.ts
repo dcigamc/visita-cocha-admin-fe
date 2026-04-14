@@ -14,9 +14,11 @@ export class CategoryListComponent {
   private messageService = inject(MessageService);
 
   categoryTypes = [
-    { label: 'Categorías Principales', value: 'main-categories' },
+    { label: 'Principales', value: 'main-categories' },
     { label: 'Atractivos', value: 'attraction-categories' },
-    { label: 'Restaurantes', value: 'restaurant-categories' }
+    { label: 'Restaurantes', value: 'restaurant-categories' },
+    { label: 'Eventos', value: 'event-categories' },
+    { label: 'Hoteles', value: 'hotel-categories' }
   ];
 
   selectedType = signal<CategoryType>('main-categories');
