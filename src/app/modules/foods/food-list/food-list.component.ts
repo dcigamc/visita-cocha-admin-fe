@@ -40,8 +40,10 @@ export class FoodListComponent {
     this.router.navigate(['/foods/new']);
   }
 
-  edit(id: string) {
-    this.router.navigate(['/foods/edit', id]);
+  edit(item: FoodModel) {
+    if (item.id) {
+      this.router.navigate(['/foods/edit', item.id]);
+    }
   }
 
   showDetail(item: FoodModel) {

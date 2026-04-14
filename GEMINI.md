@@ -89,25 +89,6 @@ src/
 }
 ```
 
-```typescript
-// Modelo: events
-{
-    "id": "",
-    "available": true,
-    "isFeatured": true,
-    "description": "",
-    "order": 20,
-    "title": "",
-    "coverUrl": "",
-    "gallery": ["", ""],
-    "color": "", // green, yellow,blue, red, black-lighten
-    "date": "", // timestamp
-    "foods": ["", ""],
-    "restaurants": ["", ""],
-    "attractions": ["", ""],
-}
-```
-
 ---
 
 ## 14. Checklist de Implementación
@@ -123,7 +104,7 @@ src/
 - [x] Implementar Módulo de Auth (Login UI)
 - [x] **Diseñar e implementar Main Layout (Sidebar + Topbar)**
 
-### Fase 2 — Módulos de Contenido (EN PROCESO 🔄)
+### Fase 2 — Módulos de Contenido (COMPLETADA ✅)
 
 - [x] Módulo Attractives (CRUD + relación foods)
 - [x] Módulo Restaurants (CRUD + relación foods)
@@ -145,7 +126,16 @@ src/
 - [x] Módulo de visualización con tabla PrimeNG y visor de detalles JSON (Anterior vs Nuevo).
 - [x] Resolución de dependencia circular usando funciones nativas de Firestore.
 
-### Fase 5 — Pulido
+### Fase 5 — Pulido y Seguridad Reforzada (EN PROCESO 🔄)
 
-- [ ] Firestore Security Rules completas
-- [ ] Diseño responsive y estados de carga
+- [x] **Seguridad en Capa de Servicios**: Validación interna de `allowedIds` en todos los métodos `update` y `delete`.
+- [x] **PermissionGuard Avanzado**: Validación automática de IDs en URL para prevenir accesos manuales no autorizados.
+- [x] **Rediseño de Matriz de Permisos**: Interfaz más clara con etiquetas debajo de checkboxes y permisos por defecto en `false`.
+- [x] **Control de Acciones vs Visibilidad**: `fullAccess` ahora solo controla si se ven todos los documentos, mientras que `actions` rige la capacidad de Crear/Editar/Borrar.
+- [x] **Protección de Campos Sensibles**: El switch `isFeatured` (Destacado) y campos técnicos (`slug`, `order`) ahora solo son editables por Administradores.
+- [x] **Inmutabilidad de Logs**: Módulo de logs configurado como lectura/todo por defecto y solo modificable por el Super Administrador.
+- [x] **Sidebar Dinámico**: El menú lateral ahora se adapta en tiempo real a los permisos de lectura del usuario logueado.
+- [x] **Corrección de Navegación en Tablas**: Implementación de paso de objeto completo en funciones `edit()` para evitar errores de referencia al filtrar/buscar en PrimeNG.
+- [x] **Optimización de FirestoreService**: Sanitización automática del campo `id` para evitar contaminación de datos y soporte para `setDoc` en creaciones con ID predefinido.
+- [ ] Firestore & Storage Security Rules finales (Diseñadas, actualmente en pausa por depuración).
+- [ ] Diseño responsive final y estados de carga globales.

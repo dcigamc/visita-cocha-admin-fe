@@ -40,8 +40,10 @@ export class RestaurantListComponent {
     this.router.navigate(['/restaurants/new']);
   }
 
-  edit(id: string) {
-    this.router.navigate(['/restaurants/edit', id]);
+  edit(item: RestaurantModel) {
+    if (item.id) {
+      this.router.navigate(['/restaurants/edit', item.id]);
+    }
   }
 
   showDetail(item: RestaurantModel) {

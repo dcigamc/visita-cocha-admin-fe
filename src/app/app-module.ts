@@ -9,6 +9,7 @@ import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAuth, provideAuth } from '@angular/fire/auth';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { getStorage, provideStorage } from '@angular/fire/storage';
+import { getFunctions, provideFunctions, connectFunctionsEmulator } from '@angular/fire/functions';
 import { environment } from '../environments/environment';
 
 import { AppRoutingModule } from './app-routing-module';
@@ -45,7 +46,20 @@ import { MessageService } from 'primeng/api';
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
-    provideStorage(() => getStorage())
+    provideStorage(() => getStorage()),
+    provideFunctions(() => {
+      // Especificamos la región us-central1 para que coincida con el despliegue
+      const functions = getFunctions(undefined, 'us-central1');
+      
+      // Comenta estas líneas si quieres probar la función real desplegada:
+      /*
+      if (!environment.production) {
+        console.log('--- CONNECTING TO FUNCTIONS EMULATOR (127.0.0.1:5001) ---');
+        connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+      }
+      */
+      return functions;
+    })
   ],
   bootstrap: [App]
 })

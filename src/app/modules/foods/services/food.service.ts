@@ -3,7 +3,8 @@ import { Firestore, collection, doc, serverTimestamp, where, QueryConstraint } f
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { FoodModel } from '../../../core/models/food.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { Observable, of } from 'rxjs';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Observable, of, throwError } from 'rxjs';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 
 @Injectable({
@@ -13,6 +14,7 @@ export class FoodService {
   private firestore = inject(Firestore);
   private firestoreService = inject(FirestoreService);
   private authService = inject(AuthService);
+  private permissionService = inject(PermissionService);
   private storage = inject(Storage);
   
   private collection = 'foods';
@@ -95,6 +97,9 @@ export class FoodService {
    * Actualiza una comida.
    */
   async updateFood(id: string, data: Partial<FoodModel>): Promise<void> {
+    if (!this.permissionService.isAllowedDocument('foods', id)) {
+      throw new Error('Acceso denegado para actualizar este documento');
+    }
     const updateData = {
       ...data,
       updatedAt: serverTimestamp() as any
@@ -106,6 +111,9 @@ export class FoodService {
    * Elimina una comida.
    */
   async deleteFood(id: string, name: string): Promise<void> {
+    if (!this.permissionService.isAllowedDocument('foods', id)) {
+      throw new Error('Acceso denegado para eliminar este documento');
+    }
     return this.firestoreService.delete(this.collection, id, name);
   }
 }

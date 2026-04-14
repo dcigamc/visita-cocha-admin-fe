@@ -11,6 +11,7 @@ export class PermissionService {
   /**
    * Verifica si el usuario actual tiene permiso para una acción específica en un módulo.
    * SuperAdmin siempre tiene permiso.
+   * Para otros roles, se verifica la acción específica en la matriz de permisos.
    */
   hasPermission(module: keyof UserPermissions, action: 'create' | 'read' | 'update' | 'delete'): boolean {
     const user = this.authService.currentUser();
@@ -22,11 +23,9 @@ export class PermissionService {
     const modulePerm = user.permissions[module];
     if (!modulePerm) return false;
 
-    // Si tiene acceso total al módulo
-    if (modulePerm.fullAccess) return true;
-
-    // Si no, verificamos la acción específica
-    return modulePerm.actions[action];
+    // Verificamos la acción específica en la matriz de permisos
+    // Independientemente de si tiene fullAccess o no para el filtrado de documentos
+    return modulePerm.actions[action] || false;
   }
 
   /**

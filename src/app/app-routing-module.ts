@@ -54,6 +54,12 @@ const routes: Routes = [
         canActivate: [permissionGuard],
         data: { module: 'logs', action: 'read' }
       },
+      {
+        path: 'categories',
+        loadChildren: () => import('./modules/categories/categories.module').then(m => m.CategoriesModule),
+        canActivate: [permissionGuard],
+        data: { module: 'categories', action: 'read' }
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

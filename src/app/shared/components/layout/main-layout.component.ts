@@ -1,5 +1,7 @@
 import { Component, inject, computed } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
+import { PermissionService } from '../../../core/services/permission.service';
+import { UserPermissions } from '../../../core/models/user.model';
 
 @Component({
   selector: 'app-main-layout',
@@ -9,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class MainLayoutComponent {
   private authService = inject(AuthService);
+  private permissionService = inject(PermissionService);
   user = this.authService.currentUser;
 
   userRoleLabel = computed(() => {
@@ -21,15 +24,23 @@ export class MainLayoutComponent {
     }
   });
 
-  menuItems = [
-    { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
-    { label: 'Atractivos', icon: 'pi pi-map-marker', routerLink: '/attractives' },
-    { label: 'Restaurantes', icon: 'pi pi-shop', routerLink: '/restaurants' },
-    { label: 'Comidas', icon: 'pi pi-inbox', routerLink: '/foods' },
-    { label: 'Eventos', icon: 'pi pi-calendar', routerLink: '/events' },
-    { label: 'Usuarios', icon: 'pi pi-users', routerLink: '/users' },
-    { label: 'Logs', icon: 'pi pi-list', routerLink: '/logs' }
-  ];
+  menuItems = computed(() => {
+    const items = [
+      { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard', module: null },
+      { label: 'Atractivos', icon: 'pi pi-map-marker', routerLink: '/attractives', module: 'attractives' },
+      { label: 'Restaurantes', icon: 'pi pi-shop', routerLink: '/restaurants', module: 'restaurants' },
+      { label: 'Comidas', icon: 'pi pi-inbox', routerLink: '/foods', module: 'foods' },
+      { label: 'Eventos', icon: 'pi pi-calendar', routerLink: '/events', module: 'events' },
+      { label: 'Categorías', icon: 'pi pi-tags', routerLink: '/categories', module: 'categories' },
+      { label: 'Usuarios', icon: 'pi pi-users', routerLink: '/users', module: 'users' },
+      { label: 'Logs', icon: 'pi pi-list', routerLink: '/logs', module: 'logs' }
+    ];
+
+    return items.filter(item => {
+      if (!item.module) return true;
+      return this.permissionService.hasPermission(item.module as keyof UserPermissions, 'read');
+    });
+  });
 
   logout() {
     this.authService.logout();

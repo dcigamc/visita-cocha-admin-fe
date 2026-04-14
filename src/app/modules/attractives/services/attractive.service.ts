@@ -3,8 +3,9 @@ import { FirestoreService } from '../../../core/services/firestore.service';
 import { AttractiveModel } from '../../../core/models/attractive.model';
 import { CategoryModel } from '../../../core/models/category.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { PermissionService } from '../../../core/services/permission.service';
 import { serverTimestamp, collection, doc, where, QueryConstraint } from '@angular/fire/firestore';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 
 @Injectable({
@@ -13,6 +14,7 @@ import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angula
 export class AttractiveService {
   private firestoreService = inject(FirestoreService);
   private authService = inject(AuthService);
+  private permissionService = inject(PermissionService);
   private storage = inject(Storage);
   private collection = 'attractions';
   private mainCategoriesCollection = 'main-categories';
@@ -118,6 +120,9 @@ export class AttractiveService {
    * Actualiza un atractivo.
    */
   async updateAttractive(id: string, data: Partial<AttractiveModel>): Promise<void> {
+    if (!this.permissionService.isAllowedDocument('attractives', id)) {
+      throw new Error('Acceso denegado para actualizar este documento');
+    }
     const updateData = {
       ...data,
       updatedAt: serverTimestamp() as any
@@ -129,6 +134,9 @@ export class AttractiveService {
    * Elimina un atractivo.
    */
   async deleteAttractive(id: string, name: string): Promise<void> {
+    if (!this.permissionService.isAllowedDocument('attractives', id)) {
+      throw new Error('Acceso denegado para eliminar este documento');
+    }
     return this.firestoreService.delete(this.collection, id, name);
   }
 }

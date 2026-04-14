@@ -3,7 +3,8 @@ import { Firestore, collection, doc, serverTimestamp, where, QueryConstraint } f
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { EventModel } from '../../../core/models/event.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { Observable, of } from 'rxjs';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Observable, of, throwError } from 'rxjs';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 
 @Injectable({
@@ -13,6 +14,7 @@ export class EventService {
   private firestore = inject(Firestore);
   private firestoreService = inject(FirestoreService);
   private authService = inject(AuthService);
+  private permissionService = inject(PermissionService);
   private storage = inject(Storage);
   
   private collection = 'announcements';
@@ -119,6 +121,9 @@ export class EventService {
    * Actualiza un evento.
    */
   async updateEvent(id: string, data: Partial<EventModel>): Promise<void> {
+    if (!this.permissionService.isAllowedDocument('events', id)) {
+      throw new Error('Acceso denegado para actualizar este documento');
+    }
     const updateData = {
       ...data,
       updatedAt: serverTimestamp() as any
@@ -130,6 +135,9 @@ export class EventService {
    * Elimina un evento.
    */
   async deleteEvent(id: string, title: string): Promise<void> {
+    if (!this.permissionService.isAllowedDocument('events', id)) {
+      throw new Error('Acceso denegado para eliminar este documento');
+    }
     return this.firestoreService.delete(this.collection, id, title);
   }
 }

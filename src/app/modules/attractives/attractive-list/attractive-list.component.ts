@@ -40,8 +40,10 @@ export class AttractiveListComponent {
     this.router.navigate(['/attractives/new']);
   }
 
-  edit(id: string) {
-    this.router.navigate(['/attractives/edit', id]);
+  edit(item: AttractiveModel) {
+    if (item.id) {
+      this.router.navigate(['/attractives/edit', item.id]);
+    }
   }
 
   showDetail(item: AttractiveModel) {

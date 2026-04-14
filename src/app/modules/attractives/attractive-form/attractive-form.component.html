@@ -62,7 +62,7 @@
               </div>
 
               <div class="flex items-center gap-3">
-                <p-toggleswitch formControlName="isFeatured"></p-toggleswitch>
+                <p-toggleswitch formControlName="isFeatured" [disabled]="!isAdmin()"></p-toggleswitch>
                 <label class="font-semibold text-slate-700">Destacado</label>
               </div>
             </div>

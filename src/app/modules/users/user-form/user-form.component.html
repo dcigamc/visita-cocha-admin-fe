@@ -12,16 +12,24 @@
       <input pInputText id="email" formControlName="email" placeholder="usuario@gmail.com" />
     </div>
 
-    <div class="flex flex-col gap-2">
+    @if (!userToEdit()) {
+      <div class="flex flex-col gap-2 p-fluid">
+        <label for="password" class="text-sm font-bold text-slate-600">Contraseña Provisional</label>
+        <p-password id="password" formControlName="password" [feedback]="false" [toggleMask]="true" placeholder="Escribir contraseña" class="w-full"></p-password>
+      </div>
+    }
+
+    <div class="flex flex-col gap-2 p-fluid">
       <label for="role" class="text-sm font-bold text-slate-600">Rol de Usuario</label>
-      <p-select id="role" [options]="roles()" formControlName="role" optionLabel="label" optionValue="value" appendTo="body"></p-select>
+      <p-select id="role" [options]="roles()" formControlName="role" optionLabel="label" optionValue="value" appendTo="body" class="w-full"></p-select>
     </div>
 
-    <div class="flex items-center gap-3 mt-auto mb-2">
+    <div class="flex items-center gap-3 mt-2 md:col-span-2">
       <p-toggleswitch formControlName="isActive"></p-toggleswitch>
       <label class="text-sm font-bold text-slate-600">Usuario Activo</label>
     </div>
-  </div>
+    </div>
+
 
   <p-divider align="left">
     <div class="inline-flex align-items-center text-primary font-bold">
@@ -43,33 +51,42 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-          @for (mod of modules; track mod) {
+          @for (mod of visibleModules(); track mod) {
             <tr [formGroupName]="mod" class="hover:bg-slate-50/50 transition-colors">
               <td class="p-4 font-bold text-slate-700">
                 {{ moduleLabels[mod] }}
               </td>
               
               <td class="p-4 text-center">
-                <p-checkbox formControlName="fullAccess" [binary]="true" (onChange)="toggleFullAccess(mod)" pTooltip="Conceder acceso a todos los documentos del módulo"></p-checkbox>
+                <div class="flex flex-col items-center gap-1">
+                  <p-checkbox formControlName="fullAccess" [binary]="true" (onChange)="toggleFullAccess(mod)" 
+                    [disabled]="!canGrantFullAccess(mod) || (mod === 'logs' && !isSuperAdmin())"
+                    pTooltip="Conceder acceso a todos los documentos del módulo"></p-checkbox>
+                  <span class="text-[9px] font-bold text-slate-400 uppercase">Todo</span>
+                </div>
               </td>
 
               <td class="p-4" formGroupName="actions">
                 <div class="flex gap-4 items-center">
-                  <div class="flex items-center gap-1.5" pTooltip="Crear">
-                    <p-checkbox formControlName="create" [binary]="true"></p-checkbox>
-                    <span class="text-[10px] font-bold text-slate-400">C</span>
+                  <div class="flex flex-col items-center gap-1">
+                    <p-checkbox formControlName="create" [binary]="true" 
+                      [disabled]="!canGrantAction(mod, 'create') || (mod === 'logs' && !isSuperAdmin())"></p-checkbox>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">Crear</span>
                   </div>
-                  <div class="flex items-center gap-1.5" pTooltip="Leer">
-                    <p-checkbox formControlName="read" [binary]="true"></p-checkbox>
-                    <span class="text-[10px] font-bold text-slate-400">R</span>
+                  <div class="flex flex-col items-center gap-1">
+                    <p-checkbox formControlName="read" [binary]="true" 
+                      [disabled]="!canGrantAction(mod, 'read') || (mod === 'logs' && !isSuperAdmin())"></p-checkbox>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">Leer</span>
                   </div>
-                  <div class="flex items-center gap-1.5" pTooltip="Actualizar">
-                    <p-checkbox formControlName="update" [binary]="true"></p-checkbox>
-                    <span class="text-[10px] font-bold text-slate-400">U</span>
+                  <div class="flex flex-col items-center gap-1">
+                    <p-checkbox formControlName="update" [binary]="true" 
+                      [disabled]="!canGrantAction(mod, 'update') || (mod === 'logs' && !isSuperAdmin())"></p-checkbox>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">Modif</span>
                   </div>
-                  <div class="flex items-center gap-1.5" pTooltip="Eliminar">
-                    <p-checkbox formControlName="delete" [binary]="true"></p-checkbox>
-                    <span class="text-[10px] font-bold text-slate-400">D</span>
+                  <div class="flex flex-col items-center gap-1">
+                    <p-checkbox formControlName="delete" [binary]="true" 
+                      [disabled]="!canGrantAction(mod, 'delete') || (mod === 'logs' && !isSuperAdmin())"></p-checkbox>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">Borrar</span>
                   </div>
                 </div>
               </td>

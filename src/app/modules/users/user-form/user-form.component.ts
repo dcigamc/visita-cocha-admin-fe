@@ -3,11 +3,14 @@ import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { UserService } from '../services/user.service';
 import { UserModel, Role, UserPermissions, ModulePermission } from '../../../core/models/user.model';
 import { MessageService } from 'primeng/api';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { startWith } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { AttractiveService } from '../../attractives/services/attractive.service';
 import { RestaurantService } from '../../restaurants/services/restaurant.service';
 import { FoodService } from '../../foods/services/food.service';
 import { EventService } from '../../events/services/event.service';
+import { CategoryService } from '../../categories/services/category.service';
 
 @Component({
   selector: 'app-user-form',
@@ -22,6 +25,7 @@ export class UserFormComponent implements OnInit {
   private restaurantService = inject(RestaurantService);
   private foodService = inject(FoodService);
   private eventService = inject(EventService);
+  private categoryService = inject(CategoryService);
   private messageService = inject(MessageService);
 
   // Inputs/Outputs for modal integration
@@ -30,13 +34,44 @@ export class UserFormComponent implements OnInit {
   onCancel = output<void>();
 
   isLoading = signal(false);
+
+  modules: (keyof UserPermissions)[] = [
+    'attractives', 'restaurants', 'foods', 'events', 'users', 'logs', 'categories'
+  ];
+
+  moduleLabels: Record<keyof UserPermissions, string> = {
+    attractives: 'Atractivos',
+    restaurants: 'Restaurantes',
+    foods: 'Comidas',
+    events: 'Eventos',
+    users: 'Usuarios',
+    logs: 'Logs',
+    categories: 'Categorías'
+  };
+
+  form: FormGroup = this.fb.group({
+    displayName: ['', [Validators.required]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.minLength(6)]], // Campo solo para creación
+    role: ['maintainer' as Role, [Validators.required]],
+    isActive: [true],
+    permissions: this.fb.group(this.createPermissionsGroup())
+  });
+
+  // Signal reactivo para el rol seleccionado en el formulario
+  private roleValue = toSignal(
+    this.form.get('role')!.valueChanges.pipe(
+      startWith(this.form.get('role')?.value)
+    )
+  );
   
   // Lists for allowedIds selection
   resources: Record<string, WritableSignal<any[]>> = {
     attractives: signal([]),
     restaurants: signal([]),
     foods: signal([]),
-    events: signal([])
+    events: signal([]),
+    categories: signal([])
   };
 
   roles = computed(() => {
@@ -58,26 +93,54 @@ export class UserFormComponent implements OnInit {
     return [];
   });
 
-  modules: (keyof UserPermissions)[] = [
-    'attractives', 'restaurants', 'foods', 'events', 'users', 'logs'
-  ];
+  // Módulos que el usuario actual puede ver/gestionar en la matriz de permisos
+  visibleModules = computed(() => {
+    const currentUser = this.authService.currentUser();
+    if (!currentUser) return [];
+    
+    const selectedRole = this.roleValue(); // Usamos el Signal reactivo
 
-  moduleLabels: Record<keyof UserPermissions, string> = {
-    attractives: 'Atractivos',
-    restaurants: 'Restaurantes',
-    foods: 'Comidas',
-    events: 'Eventos',
-    users: 'Usuarios',
-    logs: 'Logs'
-  };
+    let availableModules = this.modules;
+    
+    // Si el rol seleccionado es Mantenedor, ocultamos categorías (regla de negocio)
+    if (selectedRole === 'maintainer') {
+      availableModules = availableModules.filter(m => m !== 'categories');
+    }
 
-  form: FormGroup = this.fb.group({
-    displayName: ['', [Validators.required]],
-    email: ['', [Validators.required, Validators.email]],
-    role: ['maintainer' as Role, [Validators.required]],
-    isActive: [true],
-    permissions: this.fb.group(this.createPermissionsGroup())
+    if (currentUser.role === 'superadmin') return availableModules;
+
+    // Solo mostrar módulos donde el usuario tiene al menos permiso de lectura
+    return availableModules.filter(mod => {
+      const perm = currentUser.permissions?.[mod];
+      return perm && (perm.fullAccess || perm.actions.read);
+    });
   });
+
+  /**
+   * Verifica si el usuario actual puede otorgar una acción específica en un módulo.
+   */
+  canGrantAction(module: keyof UserPermissions, action: 'create' | 'read' | 'update' | 'delete'): boolean {
+    const currentUser = this.authService.currentUser();
+    if (!currentUser) return false;
+    if (currentUser.role === 'superadmin') return true;
+
+    const modPerm = currentUser.permissions?.[module];
+    if (!modPerm) return false;
+
+    // Solo puede otorgar la acción si él mismo la tiene
+    return modPerm.fullAccess || modPerm.actions[action];
+  }
+
+  /**
+   * Verifica si el usuario actual puede otorgar acceso total a un módulo.
+   */
+  canGrantFullAccess(module: keyof UserPermissions): boolean {
+    const currentUser = this.authService.currentUser();
+    if (!currentUser) return false;
+    if (currentUser.role === 'superadmin') return true;
+
+    return currentUser.permissions?.[module]?.fullAccess || false;
+  }
 
   constructor() {
     effect(() => {
@@ -85,6 +148,8 @@ export class UserFormComponent implements OnInit {
       if (user) {
         this.form.patchValue(user);
         this.form.get('email')?.disable();
+        this.form.get('password')?.clearValidators();
+        this.form.get('password')?.updateValueAndValidity();
       } else {
         this.form.reset({
           isActive: true,
@@ -92,6 +157,23 @@ export class UserFormComponent implements OnInit {
           permissions: this.getDefaultPermissions()
         });
         this.form.get('email')?.enable();
+        this.form.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+        this.form.get('password')?.updateValueAndValidity();
+      }
+    });
+
+    // Escuchar cambios en el rol para limpiar permisos prohibidos si es necesario
+    this.form.get('role')?.valueChanges.subscribe(role => {
+      if (role === 'maintainer') {
+        // Si cambia a mantenedor, reseteamos categorías a falso/vacío por seguridad
+        const catGroup = this.form.get('permissions.categories') as FormGroup;
+        if (catGroup) {
+          catGroup.patchValue({
+            fullAccess: false,
+            allowedIds: [],
+            actions: { create: false, read: false, update: false, delete: false }
+          });
+        }
       }
     });
   }
@@ -105,20 +187,37 @@ export class UserFormComponent implements OnInit {
     this.restaurantService.getRestaurants().subscribe(data => this.resources['restaurants'].set(data));
     this.foodService.getFoods().subscribe(data => this.resources['foods'].set(data));
     this.eventService.getEvents().subscribe(data => this.resources['events'].set(data));
+
+    // Cargar categorías de las 3 colecciones
+    const allCats: any[] = [];
+    ['main-categories', 'attraction-categories', 'restaurant-categories'].forEach((type: any) => {
+      this.categoryService.getCategories(type).subscribe(data => {
+        const labeled = data.map(c => ({ ...c, name: `(${type.split('-')[0]}) ${c.name}` }));
+        // Combinamos y evitamos duplicados por ID si los hubiera
+        labeled.forEach(cat => {
+          if (!allCats.find(existing => existing.id === cat.id)) {
+            allCats.push(cat);
+          }
+        });
+        this.resources['categories'].set([...allCats]);
+      });
+    });
   }
+
+  isSuperAdmin = computed(() => this.authService.currentUser()?.role === 'superadmin');
 
   private createPermissionsGroup() {
     const group: any = {};
     this.modules.forEach(mod => {
-      const isResourceModule = ['attractives', 'restaurants', 'foods', 'events'].includes(mod);
+      const isLogs = mod === 'logs';
       group[mod] = this.fb.group({
-        fullAccess: [false],
+        fullAccess: [isLogs],
         allowedIds: [[]],
         actions: this.fb.group({
-          create: [false],
-          read: [true],
-          update: [false],
-          delete: [false]
+          create: [isLogs],
+          read: [isLogs],
+          update: [isLogs],
+          delete: [isLogs]
         })
       });
     });
@@ -128,10 +227,16 @@ export class UserFormComponent implements OnInit {
   private getDefaultPermissions(): UserPermissions {
     const perms: any = {};
     this.modules.forEach(mod => {
+      const isLogs = mod === 'logs';
       perms[mod] = {
-        fullAccess: false,
+        fullAccess: isLogs,
         allowedIds: [],
-        actions: { create: false, read: true, update: false, delete: false }
+        actions: { 
+          create: isLogs, 
+          read: isLogs, 
+          update: isLogs, 
+          delete: isLogs 
+        }
       };
     });
     return perms as UserPermissions;
@@ -149,11 +254,13 @@ export class UserFormComponent implements OnInit {
         await this.userService.updateUser(user.uid, formData, formData.displayName);
         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Perfil y permisos actualizados' });
       } else {
-        this.messageService.add({ severity: 'warn', summary: 'Info', detail: 'La creación de usuarios requiere Firebase Admin SDK' });
+        await this.userService.createUser(formData);
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario creado correctamente' });
       }
       this.onSave.emit();
-    } catch (error) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo procesar la solicitud' });
+    } catch (error: any) {
+      console.error(error);
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: error.message || 'No se pudo procesar la solicitud' });
     } finally {
       this.isLoading.set(false);
     }
@@ -176,6 +283,6 @@ export class UserFormComponent implements OnInit {
   }
 
   hasResourceSelection(mod: string): boolean {
-    return ['attractives', 'restaurants', 'foods', 'events'].includes(mod);
+    return ['attractives', 'restaurants', 'foods', 'events', 'categories'].includes(mod);
   }
 }

@@ -4,6 +4,7 @@ import {
   collection, 
   doc, 
   addDoc, 
+  setDoc,
   updateDoc, 
   deleteDoc, 
   query, 
@@ -24,7 +25,7 @@ export class FirestoreService {
 
   /**
    * Obtiene todos los documentos de una colección con filtros opcionales.
-   * Usa onSnapshot directamente para evitar errores de tipo internos de AngularFire.
+   * El id de Firebase siempre sobrescribe cualquier campo 'id' interno.
    */
   getAll<T>(collectionName: string, constraints: QueryConstraint[] = []): Observable<T[]> {
     return new Observable<T[]>(subscriber => {
@@ -34,8 +35,8 @@ export class FirestoreService {
       const unsubscribe = onSnapshot(q, 
         (snapshot) => {
           const items = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
+            ...doc.data(),
+            id: doc.id
           } as T));
           subscriber.next(items);
         },
@@ -59,7 +60,7 @@ export class FirestoreService {
       const unsubscribe = onSnapshot(docRef,
         (snapshot) => {
           if (snapshot.exists()) {
-            subscriber.next({ id: snapshot.id, ...snapshot.data() } as T);
+            subscriber.next({ ...snapshot.data(), id: snapshot.id } as T);
           } else {
             subscriber.next(null as any);
           }
@@ -75,21 +76,35 @@ export class FirestoreService {
   }
 
   /**
-   * Crea un nuevo documento y registra el log.
+   * Crea un nuevo documento. 
+   * Si data.id existe, usa setDoc para mantenerlo. Si no, usa addDoc.
    */
   async create<T>(collectionName: string, data: T, targetName?: string): Promise<string> {
     const colRef = collection(this.firestore, collectionName);
-    const docRef = await addDoc(colRef, data as any);
+    const { id, ...cleanData } = data as any;
+    
+    let finalId: string;
+
+    if (id) {
+      // Si ya viene con ID, respetamos ese ID y usamos setDoc
+      const docRef = doc(this.firestore, `${collectionName}/${id}`);
+      await setDoc(docRef, cleanData);
+      finalId = id;
+    } else {
+      // Si no trae ID, dejamos que Firebase genere uno aleatorio
+      const docRef = await addDoc(colRef, cleanData);
+      finalId = docRef.id;
+    }
     
     await this.logService.logAction({
       action: 'CREATE',
       module: collectionName as LogModule,
-      targetId: docRef.id,
+      targetId: finalId,
       targetName: targetName || collectionName,
-      newData: data
+      newData: cleanData
     });
 
-    return docRef.id;
+    return finalId;
   }
 
   /**
@@ -98,11 +113,14 @@ export class FirestoreService {
   async update<T>(collectionName: string, id: string, data: Partial<T>, targetName?: string): Promise<void> {
     const docRef = doc(this.firestore, `${collectionName}/${id}`);
     
+    // Limpiamos el ID si existe en la data para no guardarlo como campo
+    const { id: _, ...cleanData } = data as any;
+
     // Obtenemos los datos anteriores para el log
     const prevSnap = await getDoc(docRef);
     const previousData = prevSnap.data();
 
-    await updateDoc(docRef, data as any);
+    await updateDoc(docRef, cleanData);
 
     await this.logService.logAction({
       action: 'UPDATE',
@@ -110,7 +128,7 @@ export class FirestoreService {
       targetId: id,
       targetName: targetName || collectionName,
       previousData,
-      newData: data
+      newData: cleanData
     });
   }
 

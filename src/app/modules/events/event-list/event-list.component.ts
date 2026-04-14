@@ -40,8 +40,10 @@ export class EventListComponent {
     this.router.navigate(['/events/new']);
   }
 
-  edit(id: string) {
-    this.router.navigate(['/events/edit', id]);
+  edit(item: EventModel) {
+    if (item.id) {
+      this.router.navigate(['/events/edit', item.id]);
+    }
   }
 
   showDetail(item: EventModel) {

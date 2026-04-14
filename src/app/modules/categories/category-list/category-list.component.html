@@ -1,0 +1,122 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-slate-800">Gestión de Categorías</h1>
+      <p class="text-slate-500 mt-1">Administra las clasificaciones que aparecen para filtrar</p>
+    </div>
+    
+    <p-button 
+      label="Nueva Categoría" 
+      icon="pi pi-plus" 
+      severity="primary" 
+      (onClick)="create()">
+    </p-button>
+  </div>
+
+  <!-- Selector de Tipo de Categoría -->
+  <div class="flex justify-center md:justify-start">
+    <p-selectbutton 
+      [options]="categoryTypes" 
+      [ngModel]="selectedType()"
+      (ngModelChange)="selectedType.set($event)"
+      optionLabel="label" 
+      optionValue="value"
+      class="custom-select-button">
+    </p-selectbutton>
+  </div>
+
+  <!-- Tabla de Categorías (Table Card) -->
+  <div class="card shadow-sm border border-slate-200 rounded-xl overflow-hidden bg-white">
+    <p-table 
+      [value]="categories()" 
+      [loading]="isLoading()"
+      [paginator]="true" 
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 20, 50]"
+      styleClass="p-datatable-sm"
+      responsiveLayout="scroll">
+      
+      <ng-template pTemplate="header">
+        <tr class="bg-slate-50 text-slate-600 uppercase text-xs font-bold tracking-wider">
+          <th class="w-16">Icono</th>
+          <th>Nombre</th>
+          <th>Slug</th>
+          <th class="text-center">Estado</th>
+          <th class="w-24 text-center pr-6">Acciones</th>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="body" let-category>
+        <tr class="hover:bg-slate-50/50 transition-colors">
+          <td>
+            <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-50 text-slate-400 border border-slate-100 shadow-sm">
+              <i [class]="category.icon || 'pi pi-tag'"></i>
+            </div>
+          </td>
+          <td class="font-bold text-slate-800">{{category.name}}</td>
+          <td class="text-slate-500 font-mono text-xs">{{category.slug}}</td>
+          <td class="text-center">
+            @if (category.available) {
+              <i class="pi pi-check-circle text-green-500 text-lg" pTooltip="Disponible"></i>
+            } @else {
+              <i class="pi pi-times-circle text-red-500 text-lg" pTooltip="No disponible"></i>
+            }
+          </td>
+          <td class="pr-6 text-center">
+            <div class="flex justify-end gap-2">
+              <p-button 
+                icon="pi pi-pencil" 
+                severity="info" 
+                [rounded]="true" 
+                [text]="true"
+                pTooltip="Editar"
+                (onClick)="edit(category)">
+              </p-button>
+              <p-button 
+                icon="pi pi-trash" 
+                severity="danger" 
+                [rounded]="true" 
+                [text]="true"
+                pTooltip="Eliminar"
+                (onClick)="delete(category)">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="p-12 text-center">
+            <div class="flex flex-col items-center gap-3">
+              <i class="pi pi-inbox text-5xl text-slate-200"></i>
+              <span class="text-slate-400 font-medium">No se encontraron categorías en esta sección</span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Modal de Formulario -->
+<p-dialog 
+  [header]="categoryToEdit() ? 'Editar Categoría' : 'Nueva Categoría'" 
+  [visible]="displayFormModal()"
+  (visibleChange)="displayFormModal.set($event)"
+  [modal]="true" 
+  [style]="{width: '450px'}" 
+  [draggable]="false" 
+  [resizable]="false"
+  class="custom-dialog">
+  
+  @if (displayFormModal()) {
+    <app-category-form 
+      [categoryToEdit]="categoryToEdit()"
+      [type]="selectedType()"
+      (onSave)="onSave()"
+      (onCancel)="displayFormModal.set(false)">
+    </app-category-form>
+  }
+</p-dialog>

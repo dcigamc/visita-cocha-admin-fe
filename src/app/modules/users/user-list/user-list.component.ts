@@ -117,9 +117,22 @@ export class UserListComponent {
     }
   }
 
-  delete(user: UserModel) {
-    if (confirm(`¿Estás seguro de eliminar al usuario "${user.displayName}"?`)) {
-      this.userService.deleteUser(user.uid, user.displayName);
+  async delete(user: UserModel) {
+    if (confirm(`¿Estás seguro de deshabilitar al usuario "${user.displayName}"? Esta acción también suspenderá su acceso.`)) {
+      try {
+        await this.userService.toggleUserStatus(user.uid, false, user.displayName);
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Usuario Deshabilitado',
+          detail: `La cuenta de "${user.displayName}" ha sido suspendida.`
+        });
+      } catch (error) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo deshabilitar la cuenta.'
+        });
+      }
     }
   }
 }

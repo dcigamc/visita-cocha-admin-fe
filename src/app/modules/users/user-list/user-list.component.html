@@ -56,12 +56,9 @@
             <p-tag [value]="getRoleLabel(user.role)" [severity]="getRoleSeverity(user.role)"></p-tag>
           </td>
           <td class="text-center">
-            @if (canUpdateUsers()) {
-              <p-toggleswitch [ngModel]="user.isActive" (onChange)="toggleStatus(user)" 
-                pTooltip="Activar/Desactivar"></p-toggleswitch>
-            } @else {
-              <i [class]="user.isActive ? 'pi pi-check-circle text-green-500' : 'pi pi-times-circle text-red-500'" class="text-lg"></i>
-            }
+            <i [class]="user.isActive ? 'pi pi-check-circle text-green-500' : 'pi pi-times-circle text-red-500'" 
+               class="text-lg" 
+               [pTooltip]="user.isActive ? 'Cuenta Activa' : 'Cuenta Suspendida'"></i>
           </td>
           <td class="pr-6 text-center">
             <div class="flex justify-end gap-2">

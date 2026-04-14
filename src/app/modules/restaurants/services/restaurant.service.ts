@@ -4,7 +4,8 @@ import { FirestoreService } from '../../../core/services/firestore.service';
 import { RestaurantModel } from '../../../core/models/restaurant.model';
 import { CategoryModel } from '../../../core/models/category.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { Observable, of } from 'rxjs';
+import { PermissionService } from '../../../core/services/permission.service';
+import { Observable, of, throwError } from 'rxjs';
 import { Storage, ref, uploadBytes, getDownloadURL, deleteObject } from '@angular/fire/storage';
 
 @Injectable({
@@ -14,6 +15,7 @@ export class RestaurantService {
   private firestore = inject(Firestore);
   private firestoreService = inject(FirestoreService);
   private authService = inject(AuthService);
+  private permissionService = inject(PermissionService);
   private storage = inject(Storage);
   
   private collection = 'restaurants';
@@ -120,6 +122,9 @@ export class RestaurantService {
    * Actualiza un restaurante.
    */
   async updateRestaurant(id: string, data: Partial<RestaurantModel>): Promise<void> {
+    if (!this.permissionService.isAllowedDocument('restaurants', id)) {
+      throw new Error('Acceso denegado para actualizar este documento');
+    }
     const updateData = {
       ...data,
       updatedAt: serverTimestamp() as any
@@ -131,6 +136,9 @@ export class RestaurantService {
    * Elimina un restaurante.
    */
   async deleteRestaurant(id: string, name: string): Promise<void> {
+    if (!this.permissionService.isAllowedDocument('restaurants', id)) {
+      throw new Error('Acceso denegado para eliminar este documento');
+    }
     return this.firestoreService.delete(this.collection, id, name);
   }
 }

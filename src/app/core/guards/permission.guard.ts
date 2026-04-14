@@ -28,6 +28,19 @@ export const permissionGuard: CanActivateFn = (route, state) => {
       }
 
       if (permissionService.hasPermission(module, action)) {
+        // Si el usuario tiene permiso general de la acción, 
+        // verificamos si tiene permiso para el ID específico (si existe en la ruta)
+        const id = route.params['id'] || route.parent?.params['id'];
+        
+        if (id && action !== 'create') {
+          if (permissionService.isAllowedDocument(module, id)) {
+            return true;
+          } else {
+            console.warn(`Acceso denegado al documento ${id} en el módulo ${module}`);
+            return router.createUrlTree(['/dashboard']);
+          }
+        }
+
         return true;
       } else {
         // Redirigir a una página de no autorizado o al dashboard

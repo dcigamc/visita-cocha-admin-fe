@@ -1,0 +1,63 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4 py-2">
+  <div class="flex flex-col gap-1">
+    <label for="name" class="font-medium text-sm text-gray-700">Nombre</label>
+    <input 
+      id="name" 
+      type="text" 
+      pInputText 
+      formControlName="name" 
+      placeholder="Ej. Naturaleza"
+      class="w-full">
+    @if (form.get('name')?.invalid && form.get('name')?.touched) {
+      <small class="text-red-500">El nombre es requerido</small>
+    }
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label for="slug" class="font-medium text-sm text-gray-700">Slug (URL)</label>
+    <input 
+      id="slug" 
+      type="text" 
+      pInputText 
+      formControlName="slug" 
+      placeholder="ej-naturaleza"
+      class="w-full">
+    <small class="text-gray-400 text-xs">Se genera automáticamente del nombre</small>
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label for="icon" class="font-medium text-sm text-gray-700">Icono (PrimeIcons)</label>
+    <div class="p-inputGroup">
+      <span class="p-inputGroupAddon">
+        <i [class]="form.get('icon')?.value"></i>
+      </span>
+      <input 
+        id="icon" 
+        type="text" 
+        pInputText 
+        formControlName="icon" 
+        placeholder="pi pi-tag">
+    </div>
+    <small class="text-gray-400 text-xs">Ej. pi pi-map-marker, pi pi-star</small>
+  </div>
+
+  <div class="flex items-center gap-2 mt-2">
+    <p-toggleswitch formControlName="available" id="available"></p-toggleswitch>
+    <label for="available" class="font-medium text-sm text-gray-700 cursor-pointer">Disponible</label>
+  </div>
+
+  <div class="flex justify-end gap-2 mt-6">
+    <p-button 
+      label="Cancelar" 
+      severity="secondary" 
+      [outlined]="true"
+      (onClick)="cancel()">
+    </p-button>
+    <p-button 
+      [label]="categoryToEdit() ? 'Actualizar' : 'Guardar'" 
+      type="submit" 
+      [loading]="isLoading()"
+      [disabled]="form.invalid">
+    </p-button>
+  </div>
+</form>

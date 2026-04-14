@@ -3,5 +3,5 @@ export interface CategoryModel {
   name: string;
   slug: string;
   icon?: string;
-  isActive: boolean;
+  available: boolean;
 }

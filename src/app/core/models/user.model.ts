@@ -20,6 +20,7 @@ export interface UserPermissions {
   events: ModulePermission;
   users: ModulePermission;
   logs: ModulePermission;
+  categories: ModulePermission;
 }
 
 export interface UserModel {

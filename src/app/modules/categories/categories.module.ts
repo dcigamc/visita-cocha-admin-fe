@@ -7,43 +7,39 @@ import { SharedModule } from '../../shared/shared.module';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { TagModule } from 'primeng/tag';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
-import { CheckboxModule } from 'primeng/checkbox';
-import { DividerModule } from 'primeng/divider';
-import { SelectModule } from 'primeng/select';
-import { MultiSelectModule } from 'primeng/multiselect';
-import { PasswordModule } from 'primeng/password';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { TagModule } from 'primeng/tag';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 
-import { UsersRoutingModule } from './users-routing.module';
-import { UserListComponent } from './user-list/user-list.component';
-import { UserFormComponent } from './user-form/user-form.component';
+import { CategoriesRoutingModule } from './categories-routing.module';
+import { CategoryListComponent } from './category-list/category-list.component';
+import { CategoryFormComponent } from './category-form/category-form.component';
 
 @NgModule({
   declarations: [
-    UserListComponent,
-    UserFormComponent
+    CategoryListComponent,
+    CategoryFormComponent
   ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    UsersRoutingModule,
+    CategoriesRoutingModule,
     SharedModule,
     TableModule,
     ButtonModule,
     InputTextModule,
-    TagModule,
     ToggleSwitchModule,
     TooltipModule,
     DialogModule,
-    CheckboxModule,
-    DividerModule,
-    SelectModule,
-    MultiSelectModule,
-    PasswordModule
+    SelectButtonModule,
+    TagModule,
+    InputGroupModule,
+    InputGroupAddonModule
   ]
 })
-export class UsersModule { }
+export class CategoriesModule { }
